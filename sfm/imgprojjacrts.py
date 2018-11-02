@@ -148,9 +148,9 @@ def calc_image_projection_jacobian_rts(a[5], qr0[4], v[3], t[3], M[3]):
     p = fp(L, v, qr0)
 
     R = np.array([
-        [-qr0[1], -qr0[2], -qr0[3],
-        [+qr0[0], +qr0[3], -qr0[2],
-        [-qr0[3], +qr0[0], +qr0[1],
+        [-qr0[1], -qr0[2], -qr0[3]],
+        [+qr0[0], +qr0[3], -qr0[2]],
+        [-qr0[3], +qr0[0], +qr0[1]],
         [+qr0[2], -qr0[1], +qr0[0]]
     ])
 
