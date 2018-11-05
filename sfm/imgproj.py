@@ -2,6 +2,18 @@ def calcImgProj(a[5], q[4], v[3], t[3], m[3]):  # q -> qr0, m -> M
 
     L = sqrt(1.0 - np.dot(v, v));
 
+    # http://www.euclideanspace.com/maths/algebra/realNormedAlgebra/quaternions/transforms/derivations/vectors/index.htm
+    # Rotate a 3D vector v by a quaternion q
+    # We regard v as a quaternion 0 + i * v[0] + j * v[1] + k * v[2]
+    # and rotate using q
+    # q * v =
+    #        - qx*x - qy*y - qz*z
+    #   + i (+ qw*x - qz*y + qy*z)
+    #   + j (+ qz*x + qw*y - qx*z)
+    #   + k (- qy*x + qx*y + qw*z)
+    # if we represent the calculation above in a matrix form,
+    # it becomes dot(Q, v)
+
     Q = np.array([
         [-q[1], -q[2], -q[3]],
         [+q[0], +q[3], -q[2]],
