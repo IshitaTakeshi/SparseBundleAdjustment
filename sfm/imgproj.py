@@ -1,5 +1,4 @@
 def calcImgProj(a[5], q[4], v[3], t[3], m[3]):  # q -> qr0, m -> M
-
     L = sqrt(1.0 - np.dot(v, v));
 
     Q = np.array([
@@ -12,7 +11,7 @@ def calcImgProj(a[5], q[4], v[3], t[3], m[3]):  # q -> qr0, m -> M
     r = L * q + np.dot(Q, v)
 
     R = np.array([
-        [+r[1], +r[2], +r[3]],
+        [-r[1], -r[2], -r[3]],
         [+r[0], -r[3], +r[2]],
         [+r[3], +r[0], -r[1]],
         [-r[2], +r[1], +r[0]]
@@ -21,12 +20,12 @@ def calcImgProj(a[5], q[4], v[3], t[3], m[3]):  # q -> qr0, m -> M
     p = np.dot(R, m)
 
     P = np.array([
-        [+p[1], +p[0], +p[3], -p[2]],
-        [+p[2], -p[3], +p[0], +p[1]],
-        [+p[3], +p[2], -p[1], +p[0]]
+        [-p[1], +p[0], -p[3], +p[2]],
+        [-p[2], +p[3], +p[0], -p[1]],
+        [-p[3], -p[2], +p[1], +p[0]]
     ])
 
-    u = np.dot(P, r) + t
+    u = np.dot(-P, r) + t
 
     fx, fy = a[0], a[0] * a[3]
     cx, cy = a[1], a[2]
