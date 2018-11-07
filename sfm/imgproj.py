@@ -35,7 +35,7 @@ def right_matrix(q):
     return Q
 
 
-def calcImgProj(a[5], q[4], v[3], t[3], m[3]):  # q -> qr0, m -> M
+def calcImgProj(a, q, v, t, m):  # q -> qr0, m -> M
     L = sqrt(1.0 - np.dot(v, v));
 
     Q = np.array([
@@ -73,14 +73,14 @@ def calc_image_projection(a, qr0, v, t, m):
 
     L = np.sqrt(1.0-np.dot(v, v))
     r = L * A + v * A + np.cross(v, q)
-    D = L * A - np.dot(v, q)
+    D = L * A - np.dot(q, v)
     p = D * m + np.cross(r, m)
     u = np.cross(r, p) + D * p + np.dot(r, m) * r + t
 
     return camera_projection(a, u)
 
 
-def calcImgProjFullR(a[5], qr0[4], t[3], M[3], n[2]):
+def calcImgProjFullR(a, q, t, m):
     qr = np.array([
         [-q[1], -q[2], -q[3]],
         [+q[0], -q[3], +q[2]],
@@ -94,5 +94,5 @@ def calcImgProjFullR(a[5], qr0[4], t[3], M[3], n[2]):
         [-q[3], -q[2], +q[1], +q[0]]
     ])
 
-    u = np.array(ql, np.dot(qr, M)) + t
+    u = np.array(ql, np.dot(qr, m)) + t
     return camera_projection(a, u)
