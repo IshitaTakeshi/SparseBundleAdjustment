@@ -15,6 +15,26 @@ def camera_projection(a, X):
     return n
 
 
+def left_matrix(q):
+    Q = np.array([
+        [+q[0], -q[1], -q[2], -q[3]],
+        [+q[1], +q[0], -q[3], +q[2]],
+        [+q[2], +q[3], +q[0], -q[1]],
+        [+q[3], -q[2], +q[1], +q[0]]
+    ])
+    return Q
+
+
+def right_matrix(q):
+    Q = np.array([
+        [+q[0], -q[1], -q[2], -q[3]],
+        [+q[1], +q[0], +q[3], -q[2]],
+        [+q[2], -q[3], +q[0], +q[1]],
+        [+q[3], +q[2], -q[1], +q[0]]
+    ])
+    return Q
+
+
 def calcImgProj(a[5], q[4], v[3], t[3], m[3]):  # q -> qr0, m -> M
     L = sqrt(1.0 - np.dot(v, v));
 
