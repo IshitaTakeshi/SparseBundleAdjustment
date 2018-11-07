@@ -1,3 +1,6 @@
+import numpy as np
+
+
 def camera_projection(a, X):
     fx = a[0]
     fy = a[0] * a[3]
@@ -11,7 +14,7 @@ def camera_projection(a, X):
     ])
 
     Z = np.dot(A, X)
-    n = Z[0:2] / Z[2] + c
+    n = Z[0:2] / Z[2] + c  # TODO make sure Z[2] > 0
     return n
 
 
@@ -63,19 +66,6 @@ def calcImgProj(a, q, v, t, m):  # q -> qr0, m -> M
     ])
 
     u = np.dot(-P, r) + t
-
-    return camera_projection(a, u)
-
-
-def calc_image_projection(a, qr0, v, t, m):
-    A = qr0[0]
-    q = qr0[1:]
-
-    L = np.sqrt(1.0-np.dot(v, v))
-    r = L * A + v * A + np.cross(v, q)
-    D = L * A - np.dot(q, v)
-    p = D * m + np.cross(r, m)
-    u = np.cross(r, p) + D * p + np.dot(r, m) * r + t
 
     return camera_projection(a, u)
 
