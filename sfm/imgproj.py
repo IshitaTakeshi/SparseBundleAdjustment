@@ -39,16 +39,23 @@ def right_matrix(q):
 
 
 def calcImgProj(a, q, v, t, m):  # q -> qr0, m -> M
-    L = sqrt(1.0 - np.dot(v, v));
+    """
+    v : vector part of a unit quaternion that represents a camera rotation
+    t : 3D vector which stores a camera position
+    """
+
+    w = sqrt(1.0 - np.dot(v, v));  # extract the real part of quaternion
+
+    v = np.array([w, v[0], v[1], v[2]])  # full quaternion
 
     Q = np.array([
-        [-q[1], -q[2], -q[3]],
-        [+q[0], +q[3], -q[2]],
-        [-q[3], +q[0], +q[1]],
-        [+q[2], -q[1], +q[0]]
+        [q[0], -q[1], -q[2], -q[3]],
+        [q[1], +q[0], +q[3], -q[2]],
+        [q[2], -q[3], +q[0], +q[1]],
+        [q[3], +q[2], -q[1], +q[0]]
     ])
 
-    r = L * q + np.dot(Q, v)
+    r = np.dot(Q, v)
 
     R = np.array([
         [-r[1], -r[2], -r[3]],
