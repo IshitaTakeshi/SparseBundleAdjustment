@@ -8,21 +8,7 @@ def orthogonal_jacobian(q):
     return R
 
 
-def projection_matrix(a):
-    fx = a[0]
-    fy = a[0] * a[3]
-    s = a[4]
-    cx = a[1]
-    cy = a[2]
-
-    A = np.array([
-        [fx, s, cx],
-        [0, fy, cy]
-    ])
-    return A
-
-
-def calcImgProjJacRTS(a[5], qr0[4], v[3], t[3], m[3]):
+def calc_image_jacobian_rts(a[5], qr0[4], v[3], t[3], m[3]):
     w = sqrt(1.0-np.dot(v, v))
     v = np.array([w, v[0], v[1], v[2]])
 
