@@ -1,22 +1,6 @@
 import numpy as np
 
 
-def camera_projection(a, X):
-    fx = a[0]
-    fy = a[0] * a[3]
-    s = a[4]
-    c = a[1:3]  # offset
-
-    A = np.array([
-        [fx, s, 0],
-        [0, fy, 0],
-        [0,  0, 1]
-    ])
-
-    Z = np.dot(A, X)
-    n = Z[0:2] / Z[2] + c  # TODO make sure Z[2] > 0
-    return n
-
 
 def left_matrix(q):
     Q = np.array([
