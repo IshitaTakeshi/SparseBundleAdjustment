@@ -1,3 +1,5 @@
+# here we call 3D point coordinates structure parameters
+
 def orthogonal_jacobian(q):
     a, b, c, d = q
     R = np.array([
@@ -8,7 +10,23 @@ def orthogonal_jacobian(q):
     return R
 
 
-def calc_image_jacobian_rts(a[5], qr0[4], v[3], t[3], m[3]):
+def calc_image_jacobian(camera_parameters, initial_quaternion, pose, point3d):
+    return calc_image_jacobian_rts(
+        camera_parameters,
+        initial_quaternion,
+        pose[:3],
+        pose[3:],
+        point3d
+    )
+
+
+def calc_pose_and_structure_jacobian(a[5], qr0[4], v[3], t[3], m[3]):
+    """
+    Returns:
+        JRT (np.ndarray) : Jacobian w.r.t a camera pose
+        JS (np.ndarray) : Jacobian w.r.t a 3D point
+    """
+
     w = sqrt(1.0-np.dot(v, v))
     v = np.array([w, v[0], v[1], v[2]])
 
@@ -66,10 +84,11 @@ def calc_image_jacobian_rts(a[5], qr0[4], v[3], t[3], m[3]):
 
     n = np.dot(A, h) / (h[2] * h[2])
 
-    jacmRT[:, 0:3] = np.dot(A, W) / h[2] - np.outer(n, W[2])
-    jacmRT[:, 3:6] = A / h[2]
-    jacmRT[:, 5] -= n
+    JRT[:, 0:3] = np.dot(A, W) / h[2] - np.outer(n, W[2])
+    JRT[:, 3:6] = A / h[2]
+    JRT[:, 5] -= n  # subtract from the last column
 
     J = orthogonal_jacobian(p)
-    jacmS = np.dot(A, J) / h[2] - np.outer(n, J[2])
-    return jacmRT, jacmS
+    JS = np.dot(A, J) / h[2] - np.outer(n, J[2])
+
+    return JRT, JS

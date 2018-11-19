@@ -1,7 +1,6 @@
 import numpy as np
 
 
-
 def left_matrix(q):
     Q = np.array([
         [+q[0], -q[1], -q[2], -q[3]],
@@ -23,10 +22,21 @@ def right_matrix(q):
 
 
 
-def calcImgProj(a, q, v, t, m):
+
+def projection(camera_parameters, initial_rotation, pose, points3d):
+    return projection_(
+        camera_parameters,
+        initial_quaternion,
+        pose[:3],
+        pose[3:],
+        point3d
+    )
+
+
+def projection_(a, q, v, t, m):
     w = sqrt(1.0-np.dot(v, v))
-    v = np.array([w, v[0], v[1], v[2]])
-    m = np.array([0, m[0], m[1], m[2]])
+    v = np.concatenate(([w], v))
+    m = np.concatenate(([0], m))
 
     Q = np.array([
         [q[0], - q[1], - q[2], - q[3]],
@@ -105,7 +115,7 @@ def calcImgProj(a, q, v, t, m):  # q -> qr0, m -> M
     return camera_projection(a, u)
 
 
-def calcImgProjFullR(a, q, t, m):
+def calc_image_projection_(a, q, t, m):
     qr = np.array([
         [-q[1], -q[2], -q[3]],
         [+q[0], -q[3], +q[2]],

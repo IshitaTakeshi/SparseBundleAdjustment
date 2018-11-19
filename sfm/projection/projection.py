@@ -16,6 +16,10 @@ def camera_projection(a, X):
     """
     X: 3D point :math:`X = [x, y, z]` to be projected
     """
+
+    # TODO this calculation is redundant
+    # use projection_matrix to make this simple
+
     fx = a[0]
     fy = a[0] * a[3]
     s = a[4]
