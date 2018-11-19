@@ -1,51 +1,58 @@
+
+import numpy as np
+from numpy.linalg import inv
 from scipy.sparse import bsr_matrix
 
+from sfm.utils import bsr_eye_matrix
+from sfm.projection import projection, calc_pose_and_structure_jacobian
+from sfm.jacobian import camera_pose_jacobian, structure_jacobian
 
-n_pose_parameters  # dimensions of a_j
-n_viewpoints # `m` in the paper
-n_3dpoints  # `n` in the paper
+
+# here we call 3D point coordinates structure parameters
+n_pose_parameters = 6  # dimensions of a_j
 n_point_parameters = 3  # dimensions of b_i
 
 
-H = n_3dpoints * n_viewpoints
-
-
-def calc_jacobian(initial_rotation, camera_pose):
-    P = np.empty((n_viewpoints, 2, 6))
-    S = np.empty((n_3dpoints, 2, 6))
-    for i in range(n_3dpoints):
-        for j in range(n_viewpoints):
-            P[j], S[i] = calc_image_jacobian(
-                intrinsic,
-                initial_rotation,
-                camera_pose[j],
-                points3d[i]
+def calc_jacobian(camera_intrinsic, initial_rotations, points3d, poses):
+    n_viewpoints = poses.shape[0]
+    n_3dpoints = points3d.shape[0]
+    P = np.empty((n_viewpoints, 2, n_pose_parameters))
+    S = np.empty((n_3dpoints, 2, n_point_parameters))
+    for i, point3d in enumerate(points3d):
+        for j, (pose, rotation) in enumerate(zip(poses, initial_rotations)):
+            P[j], S[i] = calc_pose_and_structure_jacobian(
+                camera_intrinsic,
+                rotation,
+                pose[:3],
+                pose[3:],
+                point3d
             )
 
-    A = camera_pose_jacobian(P)
-    B = structure_jacobian(S)
+    A = camera_pose_jacobian(P, n_3dpoints, n_viewpoints, n_pose_parameters)
+    B = structure_jacobian(S, n_3dpoints, n_viewpoints, n_point_parameters)
     return A, B
 
 
-def inverse_u(U):
-    # inv(U) = diag(inv(U_1), ..., inv(U_i), ..., inv(U_n))
+
+def inv_v(V):
+    # inv(V) = diag(inv(V_1), ..., inv(V_i), ..., inv(V_n))
     for i in range(n_3dpoints):
         s = i * n_point_parameters
         t = (i+1) * n_point_parameters
-        U[s:t, s:t] = inv(U[s:t, s:t].todense())
-    return U
-
-
-def inverse_v(V):
-    # inv(V) = diag(inv(V_1), ..., inv(V_i), ..., inv(V_m))
-    for j in range(n_viewpoints):
-        s = j * n_viewpoints
-        t = (j+1) * n_viewpoints
         V[s:t, s:t] = inv(V[s:t, s:t].todense())
     return V
 
 
-def calc_update(A, B, C_inv, epsilon):
+def inv_v(U):
+    # inv(U) = diag(inv(U_1), ..., inv(U_i), ..., inv(U_m))
+    for j in range(n_viewpoints):
+        s = j * n_pose_parameters
+        t = (j+1) * n_pose_parameters
+        U[s:t, s:t] = inv(U[s:t, s:t].todense())
+    return U
+
+
+def calc_update(A, B, C_inv, epsilon, n_3dpoints, n_viewpoints):
     # eq. 12
     U = A.dot(C_inv).dot(A.T)
     W = A.dot(C_inv).dot(B.T)
@@ -59,8 +66,9 @@ def calc_update(A, B, C_inv, epsilon):
     U = U + mu * np.eye(n_pose_parameters * n_viewpoints)
     V = V + mu * np.eye(n_point_parameters * n_3dpoints)
 
-    V_inv = inverse_v(V)
-    U_inv = inverse_u(U)
+    U_inv = inv_u(U)
+    V_inv = inv_v(V)
+
     Y = W.dot(V_inv)
 
     S = U_inv - Y.dot(W.T)
@@ -73,106 +81,91 @@ def calc_update(A, B, C_inv, epsilon):
     return delta_a, delta_b
 
 
-def optimize():
-    initial_quaternion = np.hstack(
-        np.ones(n_viewpoints, 1),
-        np.zeros(n_viewpoints, 3)
-    )
+# TODO make compatibility with n_pose_parameters
+def initial_rotations(n_viewpoints):
+    return np.hstack((
+        np.ones((n_viewpoints, 1)),
+        np.zeros((n_viewpoints, 3))
+    ))
 
-    while condition():
-        x_pred = projection(
-            intrinsic,
-            initial_rotation,
-            camera_pose,
-            points3d
+
+def initial_translations(n_viewpoints):
+    return np.random.randn(n_viewpoints, 3)
+
+
+def initial_poses(n_viewpoints):
+    rotation = initial_rotations(n_viewpoints)
+    translation = initial_translations(n_viewpoints)
+    return np.hstack((rotation[:, 1:], translation))
+
+
+def initial_structure(n_3dpoints):
+    return np.random.randn(n_3dpoints, n_point_parameters)
+
+
+class SBA(object):
+    # TODO add mask to indicate invisible points
+    def __init__(self, camera_intrinsic, observation,
+                 covariances=None, initial_rotations_=None):
+        self.camera_intrinsic = camera_intrinsic
+        self.x_observation = observation
+        # n_viewpoints : `m` in the paper
+        # n_3dpoints   : `n` in the paper
+        self.n_3dpoints, self.n_viewpoints = self.x_observation.shape[0:2]
+        self.inv_covariance = inv_covariance(
+            self.n_3dpoints,
+            self.n_viewpoints,
+            covariances
         )
 
-        A, B = calc_jacobian(initial_rotation, camera_pose, points3d)
+        if initial_rotations_ is None:
+            initial_rotations_ = initial_rotations(self.n_viewpoints)
+        self.initial_rotations = initial_rotations_
 
-        delta_a, delta_b = calc_update(A, B, C_inv, x_pred - x_observation)
+    def update(self, structure_parameters, pose_parameters):
+        x_pred = projection(
+            self.camera_intrinsic,
+            self.initial_rotations,
+            structure_parameters,
+            pose_parameters
+        )
 
-        pose_parameters -= delta_a.reshape(pose_parameters.shape)
-        structure_parameters -= delta_b.reshape(structure_parameters)
+        print(structure_parameters.shape)
+        print(pose_parameters.shape)
+        print(self.n_viewpoints, self.n_3dpoints)
 
-    return pose_parameters, structure_parameters
+        A, B = calc_jacobian(
+            self.camera_intrinsic,
+            self.initial_rotations,
+            structure_parameters,
+            pose_parameters
+        )
+        epsilon = x_pred - self.x_observation
+        return calc_update(A, B, self.inv_covariance, epsilon,
+                           self.n_3dpoints, self.n_viewpoints)
 
+    def optimize(self, max_iter):
+        structure_parameters = initial_structure(self.n_3dpoints)
+        pose_parameters = initial_poses(self.n_viewpoints)
+        for i in range(max_iter):
+            delta_a, delta_b = self.update(structure_parameters,
+                                           pose_parameters)
 
+            pose_parameters -= delta_a.reshape(pose_parameters.shape)
+            structure_parameters -= delta_b.reshape(structure_parameters)
 
-def camera_pose_jacobian(jacobians):
-    # Jacobian of projected points w.r.t camera parameters
-    # the camera parameter side of J in the paper
+            # if condition():
+            #     break
 
-    # each projected point has 2 dimensions
-    H = 2 * n_3dpoints * n_viewpoints
-    W = n_pose_parameters * n_viewpoints
-
-    def column_indices():
-        def block_column_indices(j):
-            s = i * n_pose_parameters
-            t = (i+1) * n_pose_parameters
-            return np.arange(s, t)
-        K = [np.tile(block_column_indices(j), 2) for j in n_viewpoints]
-        return np.tile(K, n_3dpoints)
-
-    def row_indices():
-        return np.repeat(np.arange(2 * n_viewpoints), n_3dpoints)
-
-    row = row_indices()
-    col = column_indices()
-    data = jacobians.flatten()
-    JA = csr_matrix((data, (row, col)), blocksize=((2, n_pose_parameters)))
-    return JA
-
-
-def structure_jacobian(jacobians):
-    # Jacobian of projected points w.r.t structure parameters
-    # the structure parameter side of J in the paper
-
-    def row_indices():
-        def block_row_indices(i):
-            s = i * n_point_parameters
-            t = (i+1) * n_point_parameters
-            return np.arange(s, t)
-        indices = np.tile(np.arange(n_3dpoints), 2 * n_viewpoints])
-        return np.concatenate([block_row_indices(i) for i in indices])
-
-    def column_indices():
-        H = 2 * n_viewpoints * n_3dpoints
-        # repeat column indices horizontally
-        return np.repeat(np.arange(H), n_point_parameters)
+        return pose_parameters, structure_parameters
 
 
-    H = 2 * n_3dpoints * n_viewpoints
-    W = n_point_parameters * n_3dpoints
-
-    row = row_indices()
-    col = column_indices()
-    data = jacobians.flatten()
-    JB = csr_matrix((data, (row, col)), blocksize=(2, n_point_parameters))
-
-    return JB
-
-
-    C_inv = csr_matrix((H, H), blocksize=(2, 2))
-
-    for i in range(n_observed_points):
-        C_inv[2*i:2*i+2, 2*i:2*i+2] = covariance
-
-    JB.T.dot(C).dot(JB)
-
-
-def sparse_eye_matrix(size):
-    row = np.arange(size)
-    col = np.arange(size)
-    data = np.ones(size)
-    return bsr_matrix((data, (row, col)))
-
-
-def inv_covariance(inv_covariances=None):
-    if inv_covariances is None:
-        return sparse_eye_matrix(2 * len(inv_covariances))
-
+# FIXME the interface looks redundant
+def inv_covariance(n_viewpoints, n_3dpoints, covariances=None):
     size = n_viewpoints * n_3dpoints  # number of 2d points
+
+    if covariances is None:
+        return bsr_eye_matrix(2 * size)
 
     def column_indices(i):
         def block_column_indices(j):
@@ -184,8 +177,8 @@ def inv_covariance(inv_covariances=None):
     def row_indices():
         return np.repeat(np.arange(size), 2)
 
+    inv_covariances = np.array([inv(c) for c in covariances])
     data = inv_covariances.flatten()
     row = row_indices()
     col = column_indices()
     return bsr_matrix((data, (row, col)), blocksize=(2, 2))
-
