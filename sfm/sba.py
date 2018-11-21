@@ -49,11 +49,15 @@ def inv_v(U):
     return U
 
 
-def calc_update(A, B, C_inv, epsilon, n_3dpoints, n_viewpoints):
+def calc_update(A, B, C_inv, epsilon, n_3dpoints, n_viewpoints, mu):
+    print(A.shape)
+    print(B.shape)
+    print(C_inv.shape)
+
     # eq. 12
-    U = A.dot(C_inv).dot(A.T)
-    W = A.dot(C_inv).dot(B.T)
-    V = B.dot(C_inv).dot(B.T)
+    U = A.T.dot(C_inv).dot(A)
+    W = A.T.dot(C_inv).dot(B)
+    V = B.T.dot(C_inv).dot(B)
 
     CE = np.dot(C_inv, epsilon)
     epsilon_a = np.dot(A.T, CE)
@@ -139,7 +143,7 @@ class SBA(object):
         )
         epsilon = x_pred - self.x_observation
         return calc_update(A, B, self.inv_covariance, epsilon,
-                           self.n_3dpoints, self.n_viewpoints)
+                           self.n_3dpoints, self.n_viewpoints, mu)
 
     def optimize(self, max_iter):
         structure_parameters = initial_structure(self.n_3dpoints)
