@@ -18,8 +18,8 @@ def structure_jacobian(jacobians, n_3dpoints, n_viewpoints,
     # Jacobian of projected points w.r.t structure parameters
     # the structure parameter side of J in the paper
 
-    row = row_indices()
-    col = col_indices()
+    row = row_indices(n_viewpoints, n_3dpoints, n_point_parameters)
+    col = col_indices(n_viewpoints, n_3dpoints, n_point_parameters)
     data = jacobians.flatten()
     JB = csr_matrix((data, (row, col)), blocksize=(2, n_point_parameters))
 

@@ -20,7 +20,7 @@ def camera_pose_jacobian(jacobians, n_3dpoints, n_viewpoints,
     # Jacobian of projected points w.r.t camera parameters
     # the camera parameter side of J in the paper
 
-    row = row_indices()
-    col = col_indices()
+    row = row_indices(n_viewpoints, n_3dpoints, n_pose_parameters)
+    col = col_indices(n_viewpoints, n_3dpoints, n_pose_parameters)
     data = jacobians.flatten()
     return bsr_matrix((data, (row, col)), blocksize=((2, n_pose_parameters)))
