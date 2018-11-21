@@ -69,7 +69,7 @@ def right_matrix(q):
 def projection(camera_parameters, initial_quaternions, points3d, poses):
     P = []
     for q, point3d, pose in zip(initial_quaternions, points3d, poses):
-        p = projection_(
+        p = projection_one_point(
             camera_parameters,
             q,
             pose[:3],
@@ -81,7 +81,7 @@ def projection(camera_parameters, initial_quaternions, points3d, poses):
 
 
 
-def projection_(a, qr0, v, t, M):  # q -> qr0, m -> M
+def projection_one_point(a, qr0, v, t, M):  # q -> qr0, m -> M
     """
     v : vector part of a unit quaternion that represents a camera rotation
     t : 3D vector which stores a camera position
