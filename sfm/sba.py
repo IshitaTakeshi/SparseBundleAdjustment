@@ -4,7 +4,7 @@ from numpy.linalg import inv
 from scipy.sparse import bsr_matrix
 
 from sfm.utils import bsr_eye_matrix
-from sfm.projection import projection, calc_pose_and_structure_jacobian
+from sfm.projection import projection_points, pose_and_structure_jacobian
 from sfm.jacobian import camera_pose_jacobian, structure_jacobian
 
 
@@ -16,22 +16,19 @@ n_point_parameters = 3  # dimensions of b_i
 def calc_jacobian(camera_intrinsic, initial_rotations, points3d, poses):
     n_viewpoints = poses.shape[0]
     n_3dpoints = points3d.shape[0]
-    P = np.empty((n_viewpoints, 2, n_pose_parameters))
-    S = np.empty((n_3dpoints, 2, n_point_parameters))
+    P = np.empty((n_3dpoints, n_viewpoints, 2, n_pose_parameters))
+    S = np.empty((n_3dpoints, n_viewpoints, 2, n_point_parameters))
     for i, point3d in enumerate(points3d):
         for j, (pose, rotation) in enumerate(zip(poses, initial_rotations)):
-            P[j], S[i] = calc_pose_and_structure_jacobian(
+            P[i, j], S[i, j] = pose_and_structure_jacobian(
                 camera_intrinsic,
                 rotation,
-                pose[:3],
-                pose[3:],
-                point3d
+                point3d,
+                pose,
             )
-
     A = camera_pose_jacobian(P, n_3dpoints, n_viewpoints, n_pose_parameters)
     B = structure_jacobian(S, n_3dpoints, n_viewpoints, n_point_parameters)
     return A, B
-
 
 
 def inv_v(V):
@@ -123,7 +120,7 @@ class SBA(object):
         self.initial_rotations = initial_rotations_
 
     def update(self, structure_parameters, pose_parameters):
-        x_pred = projection(
+        x_pred = projection_points(
             self.camera_intrinsic,
             self.initial_rotations,
             structure_parameters,
