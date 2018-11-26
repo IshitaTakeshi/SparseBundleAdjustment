@@ -31,9 +31,11 @@ class LevenbergMarquardt(object):
         self.n_input_dims = n_input_dims
         self.I = np.eye(n_input_dims)
         self.tau = tau
+
+        # TODO rename the variables below. they are actually not thresholds
         self.threshold_singular = threshold_singular
         self.threshold_relative_change = threshold_relative_change
-        self.threshold_sba = threshold_sba
+        self.threshold_sba = threshold_sba  # TODO remove this if possible
 
         if initial_p is None:
             self.initial_p = self.initialize_p()
