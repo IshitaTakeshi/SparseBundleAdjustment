@@ -94,9 +94,11 @@ class LevenbergMarquardt(object):
     def initialize(self):
         p = self.initialize_p()
         J = self.J(p)
-        A = np.dot(J.T, J)
         g = np.dot(J.T, self.x - self.f(p))
-        mu = self.tau * np.diag(A).max()
+
+        v = np.sum(J * J, axis=0)  # equivalent to np.diag(np.dot(J.T, J))
+
+        mu = self.tau * v.max()
         nu = 2
         return p, J, g, mu, nu
 
