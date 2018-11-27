@@ -1,4 +1,6 @@
 import numpy as np
+from scipy import sparse
+from scipy.sparse.linalg import spsolve
 
 
 def squared_norm(v):
@@ -6,7 +8,11 @@ def squared_norm(v):
 
 
 def squared_mahalanobis_distance(x, y, C):
-    return np.dot(np.dot(x.T, C), y)
+    """
+    Calculate mahalanobis distance between :math:`\\mathbf{x}` and
+    :math:`\\mathbf{y}` i.e. :math:`\\mathbf{x}^{\\top}C\\mathbf{y}`
+    """
+    return x.T.dot(C.dot(y))
 
 
 def weighted_squared_norm(x, W):
@@ -20,16 +26,21 @@ class LevenbergMarquardt(object):
     """
     """Fig. 2"""
 
-    def __init__(self, function, jacobian, target, n_input_dims, tau,
+    # TODO set the hyperparameter
+    def __init__(self, function, jacobian, target, n_input_dims=None,
                  initial_p=None, weights=None,
-                 threshold_singular=0.01, threshold_relative_change=1e-4,
+                 tau=0.01, threshold_singular=0.01,
+                 threshold_relative_change=1e-4,
                  threshold_sba=0.01):
+        """
+        Args:
+            n_input_dims (int): Number of dimensions of :math:`\\mathbf{p}`
+        """
 
         self.f = function
         self.J = jacobian
         self.x = target
-        self.n_input_dims = n_input_dims
-        self.I = np.eye(n_input_dims)
+        self.I = sparse.eye(n_input_dims)
         self.tau = tau
 
         # TODO rename the variables below. they are actually not thresholds
@@ -38,17 +49,17 @@ class LevenbergMarquardt(object):
         self.threshold_sba = threshold_sba  # TODO remove this if possible
 
         if initial_p is None:
-            self.initial_p = self.initialize_p()
+            self.initial_p = self.initialize_p(n_input_dims)
         else:
             self.initial_p = initial_p
 
         if weights is None:
-            self.W = np.eye(len(self.x))
+            self.W = sparse.eye(len(self.x))
         else:
             self.W = weights
 
-    def initialize_p(self):
-        return np.random.normal(size=self.n_input_dims)
+    def initialize_p(self, n_input_dims):
+        return np.random.normal(size=n_input_dims)
 
     def condition_almost_singular(self, delta_p, p):
         t = self.threshold_singular
@@ -94,19 +105,20 @@ class LevenbergMarquardt(object):
         return mu, nu
 
     def initialize(self):
-        p = self.initialize_p()
+        p = self.initial_p
         J = self.J(p)
-        g = np.dot(J.T, self.x - self.f(p))
+        epsilon = self.x - self.f(p)
+        g = J.T.dot(epsilon)
 
-        v = np.sum(J * J, axis=0)  # equivalent to np.diag(np.dot(J.T, J))
+        v = J.multiply(J).sum(axis=0)  # equivalent to diag(dot(J.T, J))
 
         mu = self.tau * v.max()
         nu = 2
         return p, J, g, mu, nu
 
     def calculate_update(self, J, g, mu):
-        A = np.dot(J.T, J)
-        delta_p = np.linalg.solve(A + mu * self.I, g)
+        A = J.T.dot(J)
+        delta_p = spsolve(A + mu * self.I, g)
         return delta_p
 
     def optimize(self, max_iter=200):
