@@ -56,15 +56,18 @@ def right_matrix(q):
     return Q
 
 
-def projection_points(camera_parameters, initial_quaternions, points3d, poses):
+def projection(camera_parameters, initial_quaternions, points3d, poses):
     P = []
-    for q, point3d, pose in zip(initial_quaternions, points3d, poses):
-        p = projection_one_point(camera_parameters, q, point3d, pose)
-        P.append(p)
-    return P
+    for q, pose in zip(initial_quaternions, poses):
+        for point3d in points3d:
+            p = projection_(camera_parameters, q, point3d, pose)
+            P.append(p)
+    P = np.array(P)
+    return P.flatten()
 
 
-def projection_one_point(camera_parameters, initial_quaternion, point3d, pose):
+# TODO remove this interface by modifying projection_one_point_
+def projection_(camera_parameters, initial_quaternion, point3d, pose):
     return projection_one_point_(
         camera_parameters,
         initial_quaternion,
@@ -73,10 +76,12 @@ def projection_one_point(camera_parameters, initial_quaternion, point3d, pose):
         point3d
     )
 
+
 def projection_one_point_(a, qr0, v, t, M):  # q -> qr0, m -> M
     """
     v : vector part of a unit quaternion that represents a camera rotation
     t : 3D vector which stores a camera position
+    M : Point coordinate in the 3D space
     """
 
     w = np.sqrt(1.0 - np.dot(v, v))
@@ -136,6 +141,11 @@ def pose_and_structure_jacobian(camera_parameters, initial_quaternion,
 
 def pose_and_structure_jacobian_(a, qr0, v, t, m):
     """
+    Args:
+        v (np.ndarray) : Vector part of a unit quaternion that
+            represents a camera rotation
+        t (np.ndarray) : 3D vector which stores a camera position
+        M (np.ndarray) : Point coordinate in the 3D space
     Returns:
         JRT (np.ndarray) : Jacobian w.r.t a camera pose
         JS (np.ndarray) : Jacobian w.r.t a 3D point
