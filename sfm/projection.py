@@ -26,15 +26,6 @@ def camera_projection(a, X):
     return a.projection(X)
 
 
-def orthogonal_jacobian(q):
-    a, b, c, d = q
-    R = np.array([
-        [b*b + a*a - d*d - c*c, -2.0 * (a*d + b*c), 2.0 * (a*c - b*d)],
-        [2.0 * (a*d - b*c), c*c + a*a - b*b - d*d, 2.0 * (a*b + c*d)],
-        [-2.0 * (a*c + d*b), 2.0 * (d*c - a*b), d*d + a*a - c*c - b*b]
-    ])
-    return R
-
 
 def left_matrix(q):
     Q = np.array([
@@ -45,15 +36,6 @@ def left_matrix(q):
     ])
     return Q
 
-
-def right_matrix(q):
-    Q = np.array([
-        [+q[0], -q[1], -q[2], -q[3]],
-        [+q[1], +q[0], +q[3], -q[2]],
-        [+q[2], -q[3], +q[0], +q[1]],
-        [+q[3], +q[2], -q[1], +q[0]]
-    ])
-    return Q
 
 
 def projection(camera_parameters, initial_quaternions, points3d, poses):
@@ -77,6 +59,35 @@ def projection_(camera_parameters, initial_quaternion, point3d, pose):
     )
 
 
+def quaternion_to_rotation_matrix(r):
+    a, b, c, d = r
+    return np.array([
+        [+ a*a + b*b - c*c - d*d, 2 * (+ b*c - a*d), 2 * (+ a*c + b*d)]
+        [2 * (+ b*c + a*d), + a*a - b*b + c*c - d*d, 2 * (- a*b + c*d)]
+        [2 * (- a*c + b*d), 2 * (+ a*b + c*d), + a*a - b*b - c*c + d*d]
+    ])
+
+
+def orthogonal_jacobian(q):
+    a, b, c, d = q
+    R = np.array([
+        [b*b + a*a - d*d - c*c, -2.0 * (a*d + b*c), 2.0 * (a*c - b*d)],
+        [2.0 * (a*d - b*c), c*c + a*a - b*b - d*d, 2.0 * (a*b + c*d)],
+        [-2.0 * (a*c + d*b), 2.0 * (d*c - a*b), d*d + a*a - c*c - b*b]
+    ])
+    return R
+
+
+def right_matrix(q):
+    a, b, c, d = q
+    return np.array([
+        [+a, -b, -c, -d],
+        [+b, +a, +d, -c],
+        [+c, -d, +a, +b],
+        [+d, +c, -b, +a]
+    ])
+
+
 def projection_one_point_(a, qr0, v, t, M):  # q -> qr0, m -> M
     """
     v : vector part of a unit quaternion that represents a camera rotation
@@ -87,27 +98,13 @@ def projection_one_point_(a, qr0, v, t, M):  # q -> qr0, m -> M
     w = np.sqrt(1.0 - np.dot(v, v))
     v = np.hstack(([w], v))
 
-    r = np.array([
-        qr0[0]*v[0] - qr0[1]*v[1] - qr0[2]*v[2] - qr0[3]*v[3],
-        qr0[1]*v[0] + qr0[0]*v[1] + qr0[3]*v[2] - qr0[2]*v[3],
-        qr0[2]*v[0] - qr0[3]*v[1] + qr0[0]*v[2] + qr0[1]*v[3],
-        qr0[3]*v[0] + qr0[2]*v[1] - qr0[1]*v[2] + qr0[0]*v[3]
-    ])
+    Q = right_matrix(qr0)
+    R = quaternion_to_rotation_matrix(r)
 
-    p = np.array([
-        - r[1]*M[0] - r[2]*M[1] - r[3]*M[2],
-        + r[0]*M[0] - r[3]*M[1] + r[2]*M[2],
-        + r[3]*M[0] + r[0]*M[1] - r[1]*M[2],
-        - r[2]*M[0] + r[1]*M[1] + r[0]*M[2]
-    ])
-
-    u = np.array([
-        + p[1]*r[0] - p[0]*r[1] - p[3]*r[2] - p[2]*r[3] + t[0],
-        + p[2]*r[0] - p[3]*r[1] - p[0]*r[2] + p[1]*r[3] + t[1],
-        + p[3]*r[0] + p[2]*r[1] - p[1]*r[2] - p[0]*r[3] + t[2]
-    ])
-
+    r = np.dot(Q, v)
+    u = np.dot(R, M) + t
     return camera_projection(a, u)
+
 
 
 def image_projection_full_rotation(a, q, t, m):
