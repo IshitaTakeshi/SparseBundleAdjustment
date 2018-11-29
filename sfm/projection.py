@@ -99,9 +99,9 @@ def projection_one_point_(a, qr0, v, t, M):  # q -> qr0, m -> M
     v = np.hstack(([w], v))
 
     Q = right_matrix(qr0)
-    R = quaternion_to_rotation_matrix(r)
-
     r = np.dot(Q, v)
+
+    R = quaternion_to_rotation_matrix(r)
     u = np.dot(R, M) + t
     return camera_projection(a, u)
 
@@ -175,6 +175,9 @@ def pose_and_structure_jacobian_(a, qr0, v, t, m):
         [-p[3], -p[2], -p[1], +p[0]]
     ])
 
+    # P = orthogonal_jacobian(p)
+    # h = np.dot(P, m) + t
+
     h = np.dot(P2, u) + t
 
     R = np.array([
@@ -184,7 +187,7 @@ def pose_and_structure_jacobian_(a, qr0, v, t, m):
         [+qr0[2], -qr0[1], +qr0[0]]
     ])
 
-    C = - (1/w) * np.outer(qr0, v[1:]) + R
+    C = - (1/v[0]) * np.outer(qr0, v[1:]) + R
 
     M = np.array([
         [0, -m[0], -m[1], -m[2]],
@@ -193,6 +196,7 @@ def pose_and_structure_jacobian_(a, qr0, v, t, m):
         [+m[2], +m[1], -m[0], 0]
     ])
 
+    # Q(u) * I*
     U = np.array([
         [+u[1], -u[0], +u[3], -u[2]],
         [+u[2], -u[3], -u[0], +u[1]],
