@@ -21,6 +21,4 @@ def structure_jacobian(jacobians, n_3dpoints, n_viewpoints,
     row = row_indices(n_viewpoints, n_3dpoints, n_point_parameters)
     col = col_indices(n_viewpoints, n_3dpoints, n_point_parameters)
     data = jacobians.flatten()
-    JB = csr_matrix((data, (row, col)), blocksize=(2, n_point_parameters))
-
-    return JB
+    return bsr_matrix((data, (row, col)), blocksize=(2, n_point_parameters))
