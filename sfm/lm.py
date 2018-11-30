@@ -76,15 +76,23 @@ class LevenbergMarquardt(object):
         b = pow(t, 2) * squared_norm(p)
         return a <= b
 
-    def calculate_rho(self, p, J, g, delta_p, epsilon_p, mu):
-        dc = weighted_squared_norm(epsilon_p, self.W)
-        dn = weighted_squared_norm(self.x - self.f(p + delta_p), self.W)
+    def calculate_rho(self, p, g, delta_p, epsilon_p, mu):
+        # mahalanobis distance from the current estimation to the target
+        current = weighted_squared_norm(epsilon_p, self.W)
+        # and the distance from the next candidate estimation to the target
+        next_ = weighted_squared_norm(self.x - self.f(p + delta_p), self.W)
 
-        dl = np.dot(delta_p, (mu * delta_p + g))
+        # dl = mu * ||delta_p||^2 + dot(delta_p, g)
+        #    = mu * ||delta_p||^2 + dot(delta_p, dot(A + mu * I, delta_p))
+        #    = mu * ||delta_p||^2 + mahalanobis(delta_p, delta_p, A + mu * I)^2
+        # Since A = dot(J.T, J) is symmetric, A is a positive definite matrix.
+        # Therefore dl > 0
+
+        dl = delta_p.dot(mu * delta_p + g)
 
         if dl == 0:  # avoid ZeroDivisionError
             return 0
-        return (dc-dn) / dl
+        return (current-next_) / dl
 
     def update(self, p, delta_p, mu, nu, rho):
         if rho > 0:
