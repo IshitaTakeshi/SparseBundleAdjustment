@@ -128,13 +128,44 @@ def image_projection_full_rotation(a, q, t, m):
 
 def pose_and_structure_jacobian(camera_parameters, initial_quaternion,
                                 point3d, pose):
-    return pose_and_structure_jacobian_(
+    return pose_and_structure_jacobian__(
         camera_parameters,
         initial_quaternion,
         pose[:3],
         pose[3:],
         point3d
     )
+
+
+def drqm_dq(q, m):
+    a, b, c, d = q
+    u, v, w = m
+    return 2 * np.array([
+        [+a*u-d*v+c*w, +b*u+c*v+d*w, -c*u+b*v+a*w, -d*u-a*v+b*w],
+        [+d*u+a*v-b*w, +c*u-b*v-a*w, +b*u+c*v+a*w, +a*u-d*v+c*w],
+        [-c*u+b*v+a*w, +d*u+a*v-b*w, -a*u+d*v-c*w, +b*u+c*v+d*w]
+    ])
+
+
+def pose_and_structure_jacobian__(a, qr0, v, t, m):
+    w = np.sqrt(1.0 - np.dot(v, v))
+    v = np.hstack(([w], v))
+
+    Q = right_matrix(qr0)
+    r = np.dot(Q, v)
+
+    R = quaternion_to_rotation_matrix(r)
+    u = np.dot(R, m) + t
+    RQM = drqm_dq(r, m)
+
+    PJ = projection_jacobian(a, u)
+    JR = np.dot(PJ, np.dot(RQM, Q))[:, 1:]
+    JT = PJ
+
+    JRT = np.hstack((JR, JT))
+    JS = np.dot(PJ, R)
+    return JRT, JS
+
 
 
 def pose_and_structure_jacobian_(a, qr0, v, t, m):
