@@ -144,7 +144,7 @@ class LevenbergMarquardt(object):
             # if self.condition_almost_singular(delta_p, p):
             #     raise RuntimeError("#TODO add comment")
 
-            rho = self.calculate_rho(p, J, g, delta_p, epsilon_p, mu)
+            rho = self.calculate_rho(p, g, delta_p, epsilon_p, mu)
             p, mu, nu = self.update(p, delta_p, mu, nu, rho)
 
             J = self.J(p)
