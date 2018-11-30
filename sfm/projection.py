@@ -28,11 +28,12 @@ def camera_projection(a, X):
 
 
 def left_matrix(q):
+    a, b, c, d = q
     Q = np.array([
-        [+q[0], -q[1], -q[2], -q[3]],
-        [+q[1], +q[0], -q[3], +q[2]],
-        [+q[2], +q[3], +q[0], -q[1]],
-        [+q[3], -q[2], +q[1], +q[0]]
+        [+a, -b, -c, -d],
+        [+b, +a, -d, +c],
+        [+c, +d, +a, -b],
+        [+d, -c, +b, +a]
     ])
     return Q
 
