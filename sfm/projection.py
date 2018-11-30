@@ -62,8 +62,8 @@ def projection_(camera_parameters, initial_quaternion, point3d, pose):
 def quaternion_to_rotation_matrix(r):
     a, b, c, d = r
     return np.array([
-        [+ a*a + b*b - c*c - d*d, 2 * (+ b*c - a*d), 2 * (+ a*c + b*d)]
-        [2 * (+ b*c + a*d), + a*a - b*b + c*c - d*d, 2 * (- a*b + c*d)]
+        [+ a*a + b*b - c*c - d*d, 2 * (+ b*c - a*d), 2 * (+ a*c + b*d)],
+        [2 * (+ b*c + a*d), + a*a - b*b + c*c - d*d, 2 * (- a*b + c*d)],
         [2 * (- a*c + b*d), 2 * (+ a*b + c*d), + a*a - b*b - c*c + d*d]
     ])
 
