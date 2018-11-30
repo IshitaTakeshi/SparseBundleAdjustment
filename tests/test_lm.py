@@ -6,8 +6,9 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
-from sfm.lm import LevenbergMarquardt
+from scipy.sparse import bsr_matrix
 
+from sfm.lm import LevenbergMarquardt
 
 
 class TestLevenbergMarquadt(unittest.TestCase):
@@ -16,12 +17,12 @@ class TestLevenbergMarquadt(unittest.TestCase):
             return np.array([10 * (p[1] - pow(p[0], 2)), (1 - p[0])])
 
         def J(p):
-            return np.array([
-                [-10 * p[0], 10],
+            return bsr_matrix([
+                [-20 * p[0], 10],
                 [-1, 0]
             ])
 
-        x = np.zeros(2)  # target
+        x = np.zeros(2)  # exact minimum is x = f(p) = [0, 0] at p = [1, 1]
 
         self.lm = LevenbergMarquardt(f, J, x, n_input_dims=2, tau=0.1,
                                      threshold_relative_change=0.0,
@@ -60,8 +61,12 @@ class TestLevenbergMarquadt(unittest.TestCase):
 
     def test_optimize(self):
         # find p such that f(p) = x
-        p = self.lm.optimize(max_iter=int(1e6))
+        p = self.lm.optimize(max_iter=int(1e3))
         assert_array_almost_equal(p, np.array([1.0, 1.0]))
+
+    def test_calculate_rho(self):
+        # TODO
+        pass
 
 
 unittest.main()
