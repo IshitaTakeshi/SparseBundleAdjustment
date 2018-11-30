@@ -140,5 +140,5 @@ class LevenbergMarquardt(object):
             p, mu, nu = self.update(p, delta_p, mu, nu, rho)
 
             J = self.J(p)
-            g = np.dot(J.T, epsilon_p)
+            g = J.T.dot(epsilon_p)
         return p
