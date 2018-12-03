@@ -1,9 +1,9 @@
 from pathlib import Path
 import sys
-import numpy as np
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
+import numpy as np
 from numpy.testing import assert_array_equal
 from sfm import camera_pose_jacobian as CJ
 from sfm import structure_jacobian as SJ
