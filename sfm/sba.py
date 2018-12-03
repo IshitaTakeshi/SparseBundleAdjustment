@@ -34,7 +34,7 @@ def initialize(A, B):
     return J
 
 
-def initial_rotations_(n_viewpoints):
+def initial_rotations(n_viewpoints):
     q = np.random.random((n_viewpoints, 4))
     n = np.linalg.norm(q, axis=1, keepdims=True)
     return q / n
@@ -50,7 +50,7 @@ def initial_translations(n_viewpoints):
 
 
 def initial_poses(n_viewpoints):
-    rotation = initial_rotations_(n_viewpoints)
+    rotation = initial_rotations(n_viewpoints)
     translation = initial_translations(n_viewpoints)
     return np.hstack((rotation[:, 1:], translation))
 
@@ -71,8 +71,6 @@ class SBA(object):
         self.camera_intrinsic = camera_intrinsic
         self.n_viewpoints = n_viewpoints
         self.n_3dpoints = n_3dpoints
-
-        self.camera_intrinsic = camera_intrinsic
 
     @property
     def initial_p(self):
@@ -107,8 +105,7 @@ class SBA(object):
         function :math:`f` which
         """
         points3d, poses = self.decompose(p)
-        x_pred = projection(self.camera_intrinsic, points3d, poses)
-        return x_pred
+        return projection(self.camera_intrinsic, points3d, poses)
 
     def jacobian(self, p):
         points3d, poses = self.decompose(p)
