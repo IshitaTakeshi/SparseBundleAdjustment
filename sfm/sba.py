@@ -4,7 +4,7 @@ from numpy.linalg import inv
 from scipy.sparse import bsr_matrix
 from scipy import sparse
 
-from sfm.projection import projection, pose_and_structure_jacobian
+from sfm.projection import projection, jacobian_pose_and_3dpoint
 from sfm.jacobian import camera_pose_jacobian, structure_jacobian
 
 
@@ -74,11 +74,6 @@ class SBA(object):
 
         self.camera_intrinsic = camera_intrinsic
 
-        if initial_rotations is None:
-            initial_rotations = initial_rotations_(self.n_viewpoints)
-
-        self.initial_rotations = initial_rotations
-
     @property
     def initial_p(self):
         points3d = initial_3dpoints(self.n_3dpoints)
@@ -112,27 +107,20 @@ class SBA(object):
         function :math:`f` which
         """
         points3d, poses = self.decompose(p)
-        x_pred = projection(self.camera_intrinsic, self.initial_rotations,
-                            points3d, poses)
+        x_pred = projection(self.camera_intrinsic, points3d, poses)
         return x_pred
 
     def jacobian(self, p):
         points3d, poses = self.decompose(p)
         A, B = calc_jacobian(
-            self.camera_intrinsic, self.initial_rotations,
+            self.camera_intrinsic,
             points3d, poses
         )
-
-        print("max diag(dot(A.T, A)): {}".format(
-            A.multiply(A).sum(axis=0).max()))
-        print("max diag(dot(B.T, B)): {}".format(
-            B.multiply(B).sum(axis=0).max()))
-
         J = sparse.hstack((A, B))
         return J
 
 
-def calc_jacobian(camera_intrinsic, initial_rotations, points3d, poses):
+def calc_jacobian(camera_intrinsic, points3d, poses):
     """
     Args:
         poses (np.ndarray): Camera poses of shape
@@ -153,13 +141,13 @@ def calc_jacobian(camera_intrinsic, initial_rotations, points3d, poses):
     P = np.empty((n_3dpoints, n_viewpoints, 2, n_pose_parameters))
     S = np.empty((n_3dpoints, n_viewpoints, 2, n_point_parameters))
     for i, point3d in enumerate(points3d):
-        for j, (pose, rotation) in enumerate(zip(poses, initial_rotations)):
-            P[i, j], S[i, j] = pose_and_structure_jacobian(
+        for j, pose in enumerate(poses):
+            P[i, j], S[i, j] = jacobian_pose_and_3dpoint(
                 camera_intrinsic,
-                rotation,
-                point3d,
                 pose,
+                point3d
             )
+
     A = camera_pose_jacobian(P, n_3dpoints, n_viewpoints, n_pose_parameters)
     B = structure_jacobian(S, n_3dpoints, n_viewpoints, n_point_parameters)
     return A, B

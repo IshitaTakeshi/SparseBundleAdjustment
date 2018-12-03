@@ -15,115 +15,123 @@ def projection_matrix(a):
     return A
 
 
-def camera_projection(a, X):
-    """
-    X: 3D point :math:`X = [x, y, z]` to be projected
-    """
-
-    # TODO this calculation is redundant
-    # use projection_matrix to make this simple
-
-    return a.projection(X)
-
-
-
-def left_matrix(q):
-    a, b, c, d = q
-    Q = np.array([
-        [+a, -b, -c, -d],
-        [+b, +a, -d, +c],
-        [+c, +d, +a, -b],
-        [+d, -c, +b, +a]
+def cross_product_matrix(v):
+    x, y, z = v
+    return np.array([
+        [0, -z, y],
+        [z, 0, -x],
+        [-y, x, 0]
     ])
-    return Q
+
+
+def drotation_tensor(t):
+    # calculate D = d [-cross_product_matrix(omega), cross(omega, t)] / d omega
+    # which its shape should be D.shape == (3, 3, 6)
+    # x, y, z = omega
+    # dR = [
+    #   [ 0   z  -y  y * tz - z * ty]
+    #   [-z   0   x  z * tx - x * tz]
+    #   [ y  -x   0  x * ty - y * tx],
+    # ]
+    # dR / d omega
+
+    tx, ty, tz = t
+    # TODO rewire using cross_product_matrix and np.cross
+    return np.array([
+        [[0, 0, 0, 0],
+         [0, 0, 1, -tz],
+         [0, -1, 0, ty]],
+        [[0, 0, -1, tz],
+         [0, 0, 0, 0],
+         [1, 0, 0, -tx]],
+        [[0, 1, 0, -ty],
+         [-1, 0, 0, tx],
+         [0, 0, 0, 0]]
+    ])
+
+
+def jacobian_projection(p):
+    """
+    Jacobian of the projection function defined below w.r.t point \\mathbf{p}
+
+    .. math:
+        pi(p) = \\frac{1}{z} \\begin{bmatrix}
+            a \\\\ b
+        \\end{bmatrix}
+    """
+
+    x, y, z = p
+    return np.array([
+        [1 / z, 0, -1 / pow(z, 2)],
+        [0, 1 / z, -1 / pow(z, 2)],
+    ])
+
+
+def jacobian_rotation(K, R, t, b):
+    X = np.hstack((b, 1))
+    DR = drotation_tensor(t)
+    D = np.empty((2, 3))
+    for i in range(3):
+        drx = R.T.dot(DR[i]).dot(X)
+        p = np.dot(K.matrix, drx)
+        JP = jacobian_projection(p)
+        D[:, i] = np.dot(JP, p)
+    return D
+
+
+def jacobian_translation(K, R, t, b):
+    KRT = np.dot(K.matrix, R.T)
+    p = np.dot(KRT, b-t)
+    PJ = jacobian_projection(p)  # calc jacobian at point p = K * R^T * (b-t)
+    return PJ.dot(KRT)
+
+
+def rodrigues(r):
+    # see
+    # https://docs.opencv.org/2.4/modules/calib3d/doc/
+    # camera_calibration_and_3d_reconstruction.html#rodrigues
+
+    theta = np.linalg.norm(r)
+    r = r / theta
+    K = cross_product_matrix(r)
+    I = np.eye(3, 3)
+    return I + np.sin(theta) * K + (1-np.cos(theta)) * np.dot(K, K)
 
 
 
-def projection(camera_parameters, initial_quaternions, points3d, poses):
+def jacobian_pose_and_3dpoint(K, a, b):
+    omega, t = a[:3], a[3:]
+    R = rodrigues(omega)
+    JR = jacobian_rotation(K, R, t, b)
+    JT = jacobian_translation(K, R, t, b)
+    jacobian_pose = np.hstack([JR, JT])
+    jacobian_3dpoint = -JT
+    return jacobian_pose, jacobian_3dpoint
+
+
+def projection(camera_parameters, points3d, poses):
     P = []
-    for q, pose in zip(initial_quaternions, poses):
-        for point3d in points3d:
-            p = projection_(camera_parameters, q, point3d, pose)
+    for a in poses:
+        omega, t = a[:3], a[3:]
+        R = rodrigues(omega)
+        for b in points3d:
+            p = projection_(camera_parameters, R, t, b)
             P.append(p)
     P = np.array(P)
     return P.flatten()
 
 
-# TODO remove this interface by modifying projection_one_point_
-def projection_(camera_parameters, initial_quaternion, point3d, pose):
-    return projection_one_point_(
-        camera_parameters,
-        initial_quaternion,
-        pose[:3],
-        pose[3:],
-        point3d
-    )
-
-
-def quaternion_to_rotation_matrix(r):
-    a, b, c, d = r
-    return np.array([
-        [+ a*a + b*b - c*c - d*d, 2 * (+ b*c - a*d), 2 * (+ a*c + b*d)],
-        [2 * (+ b*c + a*d), + a*a - b*b + c*c - d*d, 2 * (- a*b + c*d)],
-        [2 * (- a*c + b*d), 2 * (+ a*b + c*d), + a*a - b*b - c*c + d*d]
-    ])
-
-
-def orthogonal_jacobian(q):
-    a, b, c, d = q
-    R = np.array([
-        [b*b + a*a - d*d - c*c, -2.0 * (a*d + b*c), 2.0 * (a*c - b*d)],
-        [2.0 * (a*d - b*c), c*c + a*a - b*b - d*d, 2.0 * (a*b + c*d)],
-        [-2.0 * (a*c + d*b), 2.0 * (d*c - a*b), d*d + a*a - c*c - b*b]
-    ])
-    return R
-
-
-def right_matrix(q):
-    a, b, c, d = q
-    return np.array([
-        [+a, -b, -c, -d],
-        [+b, +a, +d, -c],
-        [+c, -d, +a, +b],
-        [+d, +c, -b, +a]
-    ])
-
-
-def projection_one_point_(a, qr0, v, t, M):  # q -> qr0, m -> M
+def projection_(K, R, t, b):
     """
-    v : vector part of a unit quaternion that represents a camera rotation
-    t : 3D vector which stores a camera position
-    M : Point coordinate in the 3D space
+    Args:
+        K
+        b: 3D point :math:`b = [x, y, z]` to be projected onto the image plane
+
+    Returns:
+        Image of :math:`b`
     """
 
-    w = np.sqrt(1.0 - np.dot(v, v))
-    v = np.hstack(([w], v))
-
-    Q = right_matrix(qr0)
-    r = np.dot(Q, v)
-
-    R = quaternion_to_rotation_matrix(r)
-    u = np.dot(R, M) + t
-    return camera_projection(a, u)
-
-
-
-def image_projection_full_rotation(a, q, t, m):
-    qr = np.array([
-        [-q[1], -q[2], -q[3]],
-        [+q[0], -q[3], +q[2]],
-        [+q[3], +q[0], -q[1]],
-        [-q[2], +q[1], +q[0]]
-    ])
-
-    ql = np.array([
-        [-q[1], +q[0], -q[3], +q[2]],
-        [-q[2], +q[3], +q[0], -q[1]],
-        [-q[3], -q[2], +q[1], +q[0]]
-    ])
-
-    u = np.array(ql, np.dot(qr, m)) + t
-    return camera_projection(a, u)
+    return K.projection(np.dot(R.T, b - t))
 
 
 def pose_and_structure_jacobian(camera_parameters, initial_quaternion,
@@ -135,118 +143,3 @@ def pose_and_structure_jacobian(camera_parameters, initial_quaternion,
         pose[3:],
         point3d
     )
-
-
-def drqm_dq(q, m):
-    a, b, c, d = q
-    u, v, w = m
-    return 2 * np.array([
-        [+a*u-d*v+c*w, +b*u+c*v+d*w, -c*u+b*v+a*w, -d*u-a*v+b*w],
-        [+d*u+a*v-b*w, +c*u-b*v-a*w, +b*u+c*v+a*w, +a*u-d*v+c*w],
-        [-c*u+b*v+a*w, +d*u+a*v-b*w, -a*u+d*v-c*w, +b*u+c*v+d*w]
-    ])
-
-
-def pose_and_structure_jacobian__(a, qr0, v, t, m):
-    w = np.sqrt(1.0 - np.dot(v, v))
-    v = np.hstack(([w], v))
-
-    Q = right_matrix(qr0)
-    r = np.dot(Q, v)
-
-    R = quaternion_to_rotation_matrix(r)
-    u = np.dot(R, m) + t
-    RQM = drqm_dq(r, m)
-
-    PJ = projection_jacobian(a, u)
-    JR = np.dot(PJ, np.dot(RQM, Q))[:, 1:]
-    JT = PJ
-
-    JRT = np.hstack((JR, JT))
-    JS = np.dot(PJ, R)
-    return JRT, JS
-
-
-
-def pose_and_structure_jacobian_(a, qr0, v, t, m):
-    """
-    Args:
-        v (np.ndarray) : Vector part of a unit quaternion that
-            represents a camera rotation
-        t (np.ndarray) : 3D vector which stores a camera position
-        M (np.ndarray) : Point coordinate in the 3D space
-    Returns:
-        JRT (np.ndarray) : Jacobian w.r.t a camera pose
-        JS (np.ndarray) : Jacobian w.r.t a 3D point
-    """
-
-    w = np.sqrt(1.0-np.dot(v, v))
-    v = np.array([w, v[0], v[1], v[2]])
-
-    Q = np.array([
-        [+qr0[0], -qr0[1], -qr0[2], -qr0[3]],
-        [-qr0[1], -qr0[0], -qr0[3], +qr0[2]],
-        [+qr0[2], -qr0[3], +qr0[0], +qr0[1]],
-        [+qr0[3], +qr0[2], -qr0[1], +qr0[0]]
-    ])
-
-    p = np.dot(Q, v)
-
-    P1 = np.array([
-        [+p[1], -p[2], -p[3]],
-        [+p[0], -p[3], +p[2]],
-        [+p[3], +p[0], +p[1]],
-        [-p[2], -p[1], +p[0]]
-    ])
-
-    u = np.dot(P1, m)
-
-    P2 = np.array([
-        [+p[1], +p[0], -p[3], +p[2]],
-        [-p[2], +p[3], +p[0], +p[1]],
-        [-p[3], -p[2], -p[1], +p[0]]
-    ])
-
-    # P = orthogonal_jacobian(p)
-    # h = np.dot(P, m) + t
-
-    h = np.dot(P2, u) + t
-
-    R = np.array([
-        [-qr0[1], -qr0[2], -qr0[3]],
-        [+qr0[0], +qr0[3], -qr0[2]],
-        [-qr0[3], +qr0[0], +qr0[1]],
-        [+qr0[2], -qr0[1], +qr0[0]]
-    ])
-
-    C = - (1/v[0]) * np.outer(qr0, v[1:]) + R
-
-    M = np.array([
-        [0, -m[0], -m[1], -m[2]],
-        [+m[0], 0, +m[2], -m[1]],
-        [+m[1], -m[2], 0, +m[0]],
-        [+m[2], +m[1], -m[0], 0]
-    ])
-
-    # Q(u) * I*
-    U = np.array([
-        [+u[1], -u[0], +u[3], -u[2]],
-        [+u[2], -u[3], -u[0], +u[1]],
-        [+u[3], +u[2], -u[1], -u[0]]
-    ])
-
-    W = np.dot(U, C) + np.dot(P2, np.dot(M, C))
-
-    A = a.matrix[:2]
-
-    n = np.dot(A, h) / (h[2] * h[2])
-
-    JRT = np.empty((2, 6))
-    JRT[:, 0:3] = np.dot(A, W) / h[2] - np.outer(n, W[2])
-    JRT[:, 3:6] = A / h[2]
-    JRT[:, 5] -= n  # subtract from the last column
-
-    J = orthogonal_jacobian(p)
-    JS = np.dot(A, J) / h[2] - np.outer(n, J[2])
-
-    return JRT, JS

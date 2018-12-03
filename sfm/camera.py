@@ -29,12 +29,3 @@ class CameraParameters(object):
         Z = np.dot(self.matrix, x)
         return Z[0:2] / Z[2]  # TODO make sure Z[2] != 0
 
-    def jacobian(self, point):
-        x, y, z = point
-        fx, fy = self.focal_length
-        return np.array([
-            [fx / z, 0, -fx / pow(z, 2)],
-            [0, fy / z, -fy / pow(z, 2)],
-        ])
-
-
