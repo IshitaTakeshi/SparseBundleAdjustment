@@ -98,7 +98,6 @@ def rodrigues(r):
     return I + np.sin(theta) * K + (1-np.cos(theta)) * np.dot(K, K)
 
 
-
 def jacobian_pose_and_3dpoint(K, a, b):
     omega, t = a[:3], a[3:]
     R = rodrigues(omega)
@@ -132,14 +131,3 @@ def projection_(K, R, t, b):
     """
 
     return K.projection(np.dot(R.T, b - t))
-
-
-def pose_and_structure_jacobian(camera_parameters, initial_quaternion,
-                                point3d, pose):
-    return pose_and_structure_jacobian__(
-        camera_parameters,
-        initial_quaternion,
-        pose[:3],
-        pose[3:],
-        point3d
-    )
