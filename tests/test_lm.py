@@ -11,22 +11,23 @@ from scipy.sparse import bsr_matrix
 from sfm.lm import LevenbergMarquardt
 
 
+def f(p):
+    return np.array([10 * (p[1] - pow(p[0], 2)), (1 - p[0])])
+
+
+def J(p):
+    return bsr_matrix([
+        [-20 * p[0], 10],
+        [-1, 0]
+    ])
+
+
+x = np.zeros(2)  # exact minimum is x = f(p) = [0, 0] at p = [1, 1]
+
+
 class TestLevenbergMarquadt(unittest.TestCase):
     def setUp(self):
-        def f(p):
-            return np.array([10 * (p[1] - pow(p[0], 2)), (1 - p[0])])
-
-        def J(p):
-            return bsr_matrix([
-                [-20 * p[0], 10],
-                [-1, 0]
-            ])
-
-        x = np.zeros(2)  # exact minimum is x = f(p) = [0, 0] at p = [1, 1]
-
-        self.lm = LevenbergMarquardt(f, J, x, n_input_dims=2, tau=0.1,
-                                     threshold_relative_change=0.0,
-                                     initial_p=np.array([2.0, 2.0]))
+        self.lm = LevenbergMarquardt(f, J, x, n_input_dims=2, tau=0.1)
 
     def test_update_positive(self):
         p, mu, nu = self.lm.update_positive(
@@ -60,8 +61,11 @@ class TestLevenbergMarquadt(unittest.TestCase):
         self.assertEqual(nu, 4.0)
 
     def test_optimize(self):
+        lm = LevenbergMarquardt(f, J, x, n_input_dims=2, tau=0.1,
+                                threshold_relative_change=1e-8,
+                                initial_p=np.array([2.0, 2.0]))
         # find p such that f(p) = x
-        p = self.lm.optimize(max_iter=int(1e3))
+        p = lm.optimize(max_iter=int(1e3))
         assert_array_almost_equal(p, np.array([1.0, 1.0]))
 
     def test_calculate_rho(self):
