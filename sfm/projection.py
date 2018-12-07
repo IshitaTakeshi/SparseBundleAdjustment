@@ -41,12 +41,10 @@ def jacobian_wrt_exp_coordinates(R, v, b):
     return -R.dot(U).dot(S) / np.dot(v, v)
 
 
-def jacobian_pose_and_3dpoint(camera_parameters, a, b):
-    K = camera_parameters.matrix
-    v, t = a[:3], a[3:]
-    R = rodrigues(v)
-    p = np.dot(K, transform3d(R, b, t))
-    JP = jacobian_projection(p)
+# @profile
+def jacobian_pose_and_3dpoint(K, R, v, t, b):
+    p = np.dot(K, transform3d(R, t, b))
+    JP = jacobian_pi(p)
     JV = jacobian_wrt_exp_coordinates(R, v, b)
     JR = JP.dot(JV)
     JT = JP.dot(K)
@@ -108,12 +106,14 @@ def pi(p):
 
 
 def projection(camera_parameters, points3d, poses):
+    K = camera_parameters.matrix
+
     P = []
     for a in poses:
         v, t = a[:3], a[3:]
         R = rodrigues(v)
         for b in points3d:
-            p = projection_(camera_parameters, R, t, b)
+            p = projection_(K, R, t, b)
             P.append(p)
     P = np.array(P)
     return P
@@ -133,4 +133,4 @@ def projection_(K, R, t, b):
         Image of :math:`b`
     """
 
-    return pi(np.dot(K.matrix, transform3d(R, t, b)))
+    return pi(np.dot(K, transform3d(R, t, b)))
