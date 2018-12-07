@@ -15,8 +15,9 @@ def jacobian_projection(p):
     Jacobian of the projection function defined below w.r.t point \\mathbf{p}
 
     .. math:
-        pi(p) = \\frac{1}{z} \\begin{bmatrix}
-            a \\\\ b
+        pi([x, y, z]) = \\frac{1}{z} \\begin{bmatrix}
+            x \\\\
+            y
         \\end{bmatrix}
     """
 
@@ -64,6 +65,8 @@ def rodrigues(r):
     r = r / theta
     K = cross_product_matrix(r)
     I = np.eye(3, 3)
+    # I + sin(theta) * K + (1-cos(theta)) * dot(K, K) is equivalent to
+    # cos(theta) * I + (1-cos(theta)) * outer(r, r) + sin(theta) * K
     return I + np.sin(theta) * K + (1-np.cos(theta)) * np.dot(K, K)
 
 
@@ -74,13 +77,17 @@ def pi(p):
 def projection(camera_parameters, points3d, poses):
     P = []
     for a in poses:
-        omega, t = a[:3], a[3:]
-        R = rodrigues(omega)
+        v, t = a[:3], a[3:]
+        R = rodrigues(v)
         for b in points3d:
             p = projection_(camera_parameters, R, t, b)
             P.append(p)
     P = np.array(P)
-    return P.flatten()
+    return P
+
+
+def transform3d(R, t, b):
+    return R.dot(b) + t
 
 
 def projection_(K, R, t, b):
@@ -93,4 +100,4 @@ def projection_(K, R, t, b):
         Image of :math:`b`
     """
 
-    return K.projection(np.dot(R.T, b - t))
+    return pi(np.dot(K.matrix, transform3d(R, t, b)))
