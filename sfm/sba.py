@@ -4,13 +4,10 @@ from numpy.linalg import inv
 from scipy.sparse import bsr_matrix
 from scipy import sparse
 
-from sfm.projection import projection, jacobian_pose_and_3dpoint
-from sfm.jacobian import camera_pose_jacobian, structure_jacobian
-
+from sfm.projection import projection, jacobian_projection
+from sfm.config import n_pose_parameters, n_point_parameters
 
 # here we call 3D point coordinates structure parameters
-n_pose_parameters = 6  # dimensions of a_j
-n_point_parameters = 3  # dimensions of b_i
 
 
 def initialize(A, B):
