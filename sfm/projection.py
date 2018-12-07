@@ -10,32 +10,6 @@ def cross_product_matrix(v):
     ])
 
 
-def drotation_tensor(t):
-    # calculate D = d [-cross_product_matrix(omega), cross(omega, t)] / d omega
-    # which its shape should be D.shape == (3, 3, 6)
-    # x, y, z = omega
-    # dR = [
-    #   [ 0   z  -y  y * tz - z * ty]
-    #   [-z   0   x  z * tx - x * tz]
-    #   [ y  -x   0  x * ty - y * tx],
-    # ]
-    # dR / d omega
-
-    tx, ty, tz = t
-    # TODO rewire using cross_product_matrix and np.cross
-    return np.array([
-        [[0, 0, 0, 0],
-         [0, 0, 1, -tz],
-         [0, -1, 0, ty]],
-        [[0, 0, -1, tz],
-         [0, 0, 0, 0],
-         [1, 0, 0, -tx]],
-        [[0, 1, 0, -ty],
-         [-1, 0, 0, tx],
-         [0, 0, 0, 0]]
-    ])
-
-
 def jacobian_projection(p):
     """
     Jacobian of the projection function defined below w.r.t point \\mathbf{p}
