@@ -5,8 +5,8 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 import numpy as np
 from numpy.testing import assert_array_equal
-from sfm import camera_pose_jacobian as CJ
-from sfm import structure_jacobian as SJ
+from sfm.jacobian import camera_pose as CJ
+from sfm.jacobian import structure as SJ
 
 
 def test_camera_pose_jacobian():
