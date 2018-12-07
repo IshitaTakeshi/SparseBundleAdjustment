@@ -10,7 +10,7 @@ def cross_product_matrix(v):
     ])
 
 
-def jacobian_projection(p):
+def jacobian_pi(p):
     """
     Jacobian of the projection function defined below w.r.t point \\mathbf{p}
 
@@ -23,8 +23,8 @@ def jacobian_projection(p):
 
     x, y, z = p
     return np.array([
-        [1 / z, 0, -1 / pow(z, 2)],
-        [0, 1 / z, -1 / pow(z, 2)],
+        [1 / z, 0, -x / pow(z, 2)],
+        [0, 1 / z, -y / pow(z, 2)],
     ])
 
 
