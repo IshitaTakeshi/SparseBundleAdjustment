@@ -24,8 +24,3 @@ class CameraParameters(object):
             [0, fy, oy],
             [0, 0, 1]
         ])
-
-    def projection(self, x):
-        Z = np.dot(self.matrix, x)
-        return Z[0:2] / Z[2]  # TODO make sure Z[2] != 0
-
