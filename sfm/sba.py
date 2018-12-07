@@ -105,7 +105,7 @@ class SBA(object):
         function :math:`f` which
         """
         points3d, poses = self.decompose(p)
-        return projection(self.camera_intrinsic, points3d, poses)
+        return projection(self.camera_intrinsic, points3d, poses).flatten()
 
     def jacobian(self, p):
         points3d, poses = self.decompose(p)
