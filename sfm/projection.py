@@ -55,7 +55,40 @@ def jacobian_pose_and_3dpoint(camera_parameters, a, b):
     return JA, JB
 
 
+def jacobian_projection(camera_parameters, points3d, poses):
+    """
+    Args:
+        poses (np.ndarray): Camera poses of shape
+            (n_viewpoints, n_pose_parameters)
+        points3d (np.ndarray): 3D point coordinates of shape
 
+            (n_3dpoints, n_point_parameters)
+
+    Returns:
+        A: Left side of the Jacobian.
+           :math:`\\frac{\\partial X}{\\partial \\a_j}, j=1,\dots,m`
+        B: Right side of the Jacobian.
+           :math:`\\frac{\\partial X}{\\partial \\b_i}, i=1,\dots,n`
+    """
+
+    n_viewpoints = poses.shape[0]
+    n_3dpoints = points3d.shape[0]
+    P = np.empty((n_3dpoints, n_viewpoints, 2, n_pose_parameters))
+    S = np.empty((n_3dpoints, n_viewpoints, 2, n_point_parameters))
+    K = camera_parameters.matrix
+
+    for j, a in enumerate(poses):
+        v, t = a[:3], a[3:]
+        R = rodrigues(v)
+        for i, b in enumerate(points3d):
+            P[i, j], S[i, j] = jacobian_pose_and_3dpoint(K, R, v, t, b)
+
+    A = camera_pose_jacobian(P, n_3dpoints, n_viewpoints, n_pose_parameters)
+    B = structure_jacobian(S, n_3dpoints, n_viewpoints, n_point_parameters)
+    return A, B
+
+
+# @profile
 def rodrigues(r):
     # see
     # https://docs.opencv.org/2.4/modules/calib3d/doc/

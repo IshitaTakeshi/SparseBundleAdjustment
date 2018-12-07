@@ -109,45 +109,12 @@ class SBA(object):
 
     def jacobian(self, p):
         points3d, poses = self.decompose(p)
-        A, B = calc_jacobian(
+        A, B = jacobian_projection(
             self.camera_intrinsic,
             points3d, poses
         )
         J = sparse.hstack((A, B))
         return J
-
-
-def calc_jacobian(camera_intrinsic, points3d, poses):
-    """
-    Args:
-        poses (np.ndarray): Camera poses of shape
-            (n_viewpoints, n_pose_parameters)
-        points3d (np.ndarray): 3D point coordinates of shape
-
-            (n_3dpoints, n_point_parameters)
-
-    Returns:
-        A: Left side of the Jacobian.
-           :math:`\\frac{\\partial X}{\\partial \\a_j}, j=1,\dots,m`
-        B: Right side of the Jacobian.
-           :math:`\\frac{\\partial X}{\\partial \\b_i}, i=1,\dots,n`
-    """
-
-    n_viewpoints = poses.shape[0]
-    n_3dpoints = points3d.shape[0]
-    P = np.empty((n_3dpoints, n_viewpoints, 2, n_pose_parameters))
-    S = np.empty((n_3dpoints, n_viewpoints, 2, n_point_parameters))
-    for i, point3d in enumerate(points3d):
-        for j, pose in enumerate(poses):
-            P[i, j], S[i, j] = jacobian_pose_and_3dpoint(
-                camera_intrinsic,
-                pose,
-                point3d
-            )
-
-    A = camera_pose_jacobian(P, n_3dpoints, n_viewpoints, n_pose_parameters)
-    B = structure_jacobian(S, n_3dpoints, n_viewpoints, n_point_parameters)
-    return A, B
 
 
 def inv_v(V):
