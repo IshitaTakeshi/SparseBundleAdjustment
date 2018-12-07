@@ -8,7 +8,7 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal
 
 from sfm.camera import CameraParameters
 from sfm.projection import (cross_product_matrix, rodrigues, projection_,
-                            jacobian_wrt_exp_coordinates,
+                            jacobian_wrt_exp_coordinates, jacobian_pi,
                             jacobian_pose_and_3dpoint)
 
 
@@ -63,6 +63,14 @@ def test_rodrigues():
     GT = np.cos(theta) * np.eye(3) + (1-np.cos(theta)) * vv + np.sin(theta) * K
 
     assert_array_almost_equal(rodrigues([np.pi / 2, 0, - np.pi / 2]), GT)
+
+
+def test_jacobian_pi():
+    GT = np.array([
+        [1 / 4, 0, -3 / 16],
+        [0, 1 / 4, -2 / 16]
+    ])
+    assert_array_equal(jacobian_pi([3, 2, 4]), GT)
 
 
 def test_jaocobian_pose_and_3dpoint():
