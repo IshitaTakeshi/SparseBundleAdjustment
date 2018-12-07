@@ -74,41 +74,57 @@ def test_jacobian_pi():
 
 
 def test_jaocobian_pose_and_3dpoint():
-    K = CameraParameters(1, 0)
+    K = CameraParameters(1, 0).matrix
 
-    def test_pose_approximation():
+    def test_rotation_approximation():
         b = np.array([1.0, 1.0, 1.0])
+        t = np.array([0.0, 0.0, 0.0])
 
-        a0 = np.array([1.00, 1.00, 1.00, 0.0, 0.0, 0.0])
-        a1 = np.array([0.95, 1.05, 1.00, 0.0, 0.0, 0.0])
+        v0 = np.array([1.00, 1.00, 1.00])
+        v1 = np.array([0.95, 1.05, 1.08])
 
-        p1 = projection_(K, rodrigues(a1[:3]), a1[3:], b)
-        p0 = projection_(K, rodrigues(a0[:3]), a0[3:], b)
-        JA, JB = jacobian_pose_and_3dpoint(K, a0, b)
+        R0 = rodrigues(v0)
+
+        a0 = np.hstack([v0, t])
+        a1 = np.hstack([v1, t])
+
+        p1 = projection_(K, rodrigues(v1), t, b)
+        p0 = projection_(K, rodrigues(v0), t, b)
+        JA, JB = jacobian_pose_and_3dpoint(K, R0, v0, t, b)
         print("diff         : ", p1 - p0)
         print("linearization: ", np.dot(JA, a1-a0))
 
-        a0 = np.array([1.0, 0.0, 0.0, 1.00, 1.00, 1.00])
-        a1 = np.array([1.0, 0.0, 0.0, 1.01, 1.01, 1.01])
+    def test_translation_approximation():
+        b = np.array([1.0, 1.0, 1.0])
+        v = np.array([1.0, 0.0, 0.0])
+        R = rodrigues(v)
+        t0 = np.array([1.00, 1.00, 1.00])
+        t1 = np.array([1.01, 1.01, 1.01])
 
-        p1 = projection_(K, rodrigues(a1[:3]), a1[3:], b)
-        p0 = projection_(K, rodrigues(a0[:3]), a0[3:], b)
-        JA, JB = jacobian_pose_and_3dpoint(K, a0, b)
+        a0 = np.hstack([v, t0])
+        a1 = np.hstack([v, t1])
+
+        p1 = projection_(K, rodrigues(v), t1, b)
+        p0 = projection_(K, rodrigues(v), t0, b)
+        JA, JB = jacobian_pose_and_3dpoint(K, R, v, t0, b)
         print("diff         : ", p1 - p0)
         print("linearization: ", np.dot(JA, a1-a0))
 
     def test_3dpoint_approximation():
         b0 = np.array([1.00, 1.00, 1.00])
-        b1 = np.array([1.01, 1.01, 1.00])
-        a = np.array([1.0, 0.0, 0.0, 1.00, 1.00, 1.00])
+        b1 = np.array([1.01, 1.01, 1.01])
+        v = np.array([1.0, 0.0, 0.0])
+        R = rodrigues(v)
+        t = np.array([1.00, 1.00, 1.00])
 
-        p1 = projection_(K, rodrigues(a[:3]), a[3:], b1)
-        p0 = projection_(K, rodrigues(a[:3]), a[3:], b0)
-        JA, JB = jacobian_pose_and_3dpoint(K, a, b0)
+        p1 = projection_(K, rodrigues(v), t, b1)
+        p0 = projection_(K, rodrigues(v), t, b0)
+        JA, JB = jacobian_pose_and_3dpoint(K, R, v, t, b0)
         print("diff         : ", p1 - p0)
         print("linearization: ", np.dot(JB, b1-b0))
 
-    test_pose_approximation()
+    test_rotation_approximation()
+    test_translation_approximation()
     test_3dpoint_approximation()
 
 
@@ -120,7 +136,7 @@ def test_projection_():
     ])
     t = np.array([0, 1, 0])
     b = np.array([0, 0, 1])
-    K = CameraParameters(np.sqrt(2), 2)
+    K = CameraParameters(np.sqrt(2), 2).matrix
 
     GT = np.array([2 + np.sqrt(2), 4])
 
@@ -137,3 +153,4 @@ test_rodrigues()
 test_jacobian_wrt_exp_coordinates()
 test_projection_()
 test_jaocobian_pose_and_3dpoint()
+test_jacobian_pi()
