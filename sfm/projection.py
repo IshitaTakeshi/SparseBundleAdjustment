@@ -1,20 +1,6 @@
 import numpy as np
 
 
-def projection_matrix(a):
-    fx = a[0]
-    fy = a[0] * a[3]
-    s = a[4]
-    cx = a[1]
-    cy = a[2]
-
-    A = np.array([
-        [fx, s, cx],
-        [0, fy, cy]
-    ])
-    return A
-
-
 def cross_product_matrix(v):
     x, y, z = v
     return np.array([
