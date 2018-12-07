@@ -27,23 +27,32 @@ def jacobian_projection(p):
     ])
 
 
-def jacobian_rotation(K, R, t, b):
-    X = np.hstack((b, 1))
-    DR = drotation_tensor(t)
-    D = np.empty((2, 3))
-    for i in range(3):
-        drx = R.T.dot(DR[i]).dot(X)
-        p = np.dot(K.matrix, drx)
-        JP = jacobian_projection(p)
-        D[:, i] = np.dot(JP, p)
-    return D
+def jacobian_wrt_exp_coordinates(R, v, b):
+    # See https://arxiv.org/abs/1312.0788
+    """
+    Calculate
+    :math:`\\frac{R(\\mathbf{v})\\mathbf{b} + \\mathbf{t}}{\\mathbf{v}}`
+    """
+    U = cross_product_matrix(b)
+    V = cross_product_matrix(v)
+    I = np.eye(3)
+    S = np.outer(v, v) + np.dot(R.T - I, V)
+    return -R.dot(U).dot(S) / np.dot(v, v)
 
 
-def jacobian_translation(K, R, t, b):
-    KRT = np.dot(K.matrix, R.T)
-    p = np.dot(KRT, b-t)
-    PJ = jacobian_projection(p)  # calc jacobian at point p = K * R^T * (b-t)
-    return PJ.dot(KRT)
+def jacobian_pose_and_3dpoint(camera_parameters, a, b):
+    K = camera_parameters.matrix
+    v, t = a[:3], a[3:]
+    R = rodrigues(v)
+    p = np.dot(K, transform3d(R, b, t))
+    JP = jacobian_projection(p)
+    JV = jacobian_wrt_exp_coordinates(R, v, b)
+    JR = JP.dot(JV)
+    JT = JP.dot(K)
+    JA = np.hstack([JR, JT])
+    JB = JT.dot(R)
+    return JA, JB
+
 
 
 def rodrigues(r):
@@ -58,14 +67,8 @@ def rodrigues(r):
     return I + np.sin(theta) * K + (1-np.cos(theta)) * np.dot(K, K)
 
 
-def jacobian_pose_and_3dpoint(K, a, b):
-    omega, t = a[:3], a[3:]
-    R = rodrigues(omega)
-    JR = jacobian_rotation(K, R, t, b)
-    JT = jacobian_translation(K, R, t, b)
-    jacobian_pose = np.hstack([JR, JT])
-    jacobian_3dpoint = -JT
-    return jacobian_pose, jacobian_3dpoint
+def pi(p):
+    return p[0:2] / p[2]
 
 
 def projection(camera_parameters, points3d, poses):
