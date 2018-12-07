@@ -57,15 +57,14 @@ def initial_3dpoints(n_3dpoints):
 
 
 class SBA(object):
-    def __init__(self, camera_intrinsic, n_viewpoints, n_3dpoints,
-                 initial_rotations=None):
+    def __init__(self, camera_parameters, n_viewpoints, n_3dpoints):
         """
         Args:
-        camera_intrinsic (CameraParameters): Camera intrinsic parameters
+        camera_parameters (CameraParameters): Camera intrinsic parameters
         n_viewpoints (int) : Number of viewpoints. `m` in the paper
         n_3dpoints (int): Number of 3D points to be reconstructed. `n` in the paper
         """
-        self.camera_intrinsic = camera_intrinsic
+        self.camera_parameters = camera_parameters
         self.n_viewpoints = n_viewpoints
         self.n_3dpoints = n_3dpoints
 
@@ -88,13 +87,15 @@ class SBA(object):
         return self.length_all_3dpoints + self.length_all_poses
 
     def compose(self, points3d, poses):
-        return np.concatenate((points3d.flatten(), poses.flatten()))
+        return np.concatenate((poses.flatten(), points3d.flatten()))
 
     def decompose(self, p):
-        N = self.length_all_3dpoints
-        M = self.length_all_poses
-        points3d = p[:N].reshape(self.n_3dpoints, n_point_parameters)
-        poses = p[N:N+M].reshape(self.n_viewpoints, n_pose_parameters)
+        N = self.length_all_poses
+        M = self.length_all_3dpoints
+        assert(len(p) == self.total_parameter_size)
+        # FIXME This part is confusing. The order should be reversed
+        poses = p[:N].reshape(self.n_viewpoints, n_pose_parameters)
+        points3d = p[N:N+M].reshape(self.n_3dpoints, n_point_parameters)
         return points3d, poses
 
     def projection(self, p):
@@ -102,14 +103,15 @@ class SBA(object):
         function :math:`f` which
         """
         points3d, poses = self.decompose(p)
-        return projection(self.camera_intrinsic, points3d, poses).flatten()
+        return projection(self.camera_parameters, points3d, poses).flatten()
 
     def jacobian(self, p):
         points3d, poses = self.decompose(p)
         A, B = jacobian_projection(
-            self.camera_intrinsic,
+            self.camera_parameters,
             points3d, poses
         )
+
         J = sparse.hstack((A, B))
         return J
 
