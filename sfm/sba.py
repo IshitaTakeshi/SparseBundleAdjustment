@@ -70,9 +70,9 @@ class SBA(object):
 
     @property
     def initial_p(self):
-        points3d = initial_3dpoints(self.n_3dpoints)
         poses = initial_poses(self.n_viewpoints)
-        return self.compose(points3d, poses)
+        points3d = initial_3dpoints(self.n_3dpoints)
+        return self.compose(poses, points3d)
 
     @property
     def length_all_3dpoints(self):
@@ -86,7 +86,7 @@ class SBA(object):
     def total_parameter_size(self):
         return self.length_all_3dpoints + self.length_all_poses
 
-    def compose(self, points3d, poses):
+    def compose(self, poses, points3d):
         return np.concatenate((poses.flatten(), points3d.flatten()))
 
     def decompose(self, p):
@@ -96,20 +96,22 @@ class SBA(object):
         # FIXME This part is confusing. The order should be reversed
         poses = p[:N].reshape(self.n_viewpoints, n_pose_parameters)
         points3d = p[N:N+M].reshape(self.n_3dpoints, n_point_parameters)
-        return points3d, poses
+        return poses, points3d
 
     def projection(self, p):
         """
         function :math:`f` which
         """
-        points3d, poses = self.decompose(p)
-        return projection(self.camera_parameters, points3d, poses).flatten()
+
+        poses, points3d = self.decompose(p)
+        P = projection(self.camera_parameters, poses, points3d)
+        return P.flatten()
 
     def jacobian(self, p):
-        points3d, poses = self.decompose(p)
+        poses, points3d = self.decompose(p)
         A, B = jacobian_projection(
             self.camera_parameters,
-            points3d, poses
+            poses, points3d
         )
 
         J = sparse.hstack((A, B))

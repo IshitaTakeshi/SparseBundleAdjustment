@@ -54,13 +54,12 @@ def jacobian_pose_and_3dpoint(K, R, v, t, b):
     return JA, JB
 
 
-def jacobian_projection(camera_parameters, points3d, poses):
+def jacobian_projection(camera_parameters, poses, points3d):
     """
     Args:
         poses (np.ndarray): Camera poses of shape
             (n_viewpoints, n_pose_parameters)
         points3d (np.ndarray): 3D point coordinates of shape
-
             (n_3dpoints, n_point_parameters)
 
     Returns:
@@ -82,9 +81,9 @@ def jacobian_projection(camera_parameters, points3d, poses):
         for i, b in enumerate(points3d):
             P[i, j], S[i, j] = jacobian_pose_and_3dpoint(K, R, v, t, b)
 
-    A = camera_pose_jacobian(P, n_3dpoints, n_viewpoints, n_pose_parameters)
-    B = structure_jacobian(S, n_3dpoints, n_viewpoints, n_point_parameters)
-    return A, B
+    JA = camera_pose_jacobian(P, n_3dpoints, n_viewpoints, n_pose_parameters)
+    JB = structure_jacobian(S, n_3dpoints, n_viewpoints, n_point_parameters)
+    return JA, JB
 
 
 # @profile
