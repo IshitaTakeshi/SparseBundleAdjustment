@@ -13,10 +13,17 @@ def col_indices(n_viewpoints, n_3dpoints, n_point_parameters):
     return np.repeat(U, 2 * n_viewpoints, axis=0).flatten()
 
 
-def structure_jacobian(jacobians, n_3dpoints, n_viewpoints,
-                       n_point_parameters):
-    # Jacobian of projected points w.r.t structure parameters
-    # the structure parameter side of J in the paper
+def structure_jacobian(jacobians):
+    """
+    Jacobian of projected points w.r.t structure parameters.
+    :math:`B_{ij}` in the paper
+
+    Args:
+        jacobians: Array of Jacobians which its shape is
+            (n_3dpoints, n_viewpoints, 2, n_point_parameters)
+    """
+
+    n_3dpoints, n_viewpoints, _, n_point_parameters = jacobians.shape
 
     row = row_indices(n_viewpoints, n_3dpoints, n_point_parameters)
     col = col_indices(n_viewpoints, n_3dpoints, n_point_parameters)

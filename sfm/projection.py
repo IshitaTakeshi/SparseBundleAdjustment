@@ -30,11 +30,17 @@ def jacobian_pi(p):
 
 
 def jacobian_wrt_exp_coordinates(R, v, b):
-    # See https://arxiv.org/abs/1312.0788
     """
     Calculate
-    :math:`\\frac{R(\\mathbf{v})\\mathbf{b} + \\mathbf{t}}{\\mathbf{v}}`
+    .. math::
+    \\begin{align}
+        \\frac{\partial (R(\\mathbf{v})\\mathbf{b} + \\mathbf{t})}{\\partial \\mathbf{v}}
+        &= ...
+    \\end{align}
     """
+
+    # See https://arxiv.org/abs/1312.0788
+
     U = cross_product_matrix(b)
     V = cross_product_matrix(v)
     I = np.eye(3)
@@ -42,7 +48,6 @@ def jacobian_wrt_exp_coordinates(R, v, b):
     return -R.dot(U).dot(S) / np.dot(v, v)
 
 
-# @profile
 def jacobian_pose_and_3dpoint(K, R, v, t, b):
     p = np.dot(K, transform3d(R, t, b))
     JP = jacobian_pi(p)
@@ -81,12 +86,11 @@ def jacobian_projection(camera_parameters, poses, points3d):
         for i, b in enumerate(points3d):
             P[i, j], S[i, j] = jacobian_pose_and_3dpoint(K, R, v, t, b)
 
-    JA = camera_pose_jacobian(P, n_3dpoints, n_viewpoints, n_pose_parameters)
-    JB = structure_jacobian(S, n_3dpoints, n_viewpoints, n_point_parameters)
+    JA = camera_pose_jacobian(P)
+    JB = structure_jacobian(S)
     return JA, JB
 
 
-# @profile
 def rodrigues(r):
     # see
     # https://docs.opencv.org/2.4/modules/calib3d/doc/
