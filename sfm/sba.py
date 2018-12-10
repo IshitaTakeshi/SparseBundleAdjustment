@@ -60,10 +60,11 @@ class SBA(object):
     def __init__(self, camera_parameters, n_viewpoints, n_3dpoints):
         """
         Args:
-        camera_parameters (CameraParameters): Camera intrinsic parameters
-        n_viewpoints (int) : Number of viewpoints. `m` in the paper
-        n_3dpoints (int): Number of 3D points to be reconstructed. `n` in the paper
+            camera_parameters (CameraParameters): Camera intrinsic parameters
+            n_viewpoints (int) : Number of viewpoints. `m` in the paper
+            n_3dpoints (int): Number of 3D points to be reconstructed. `n` in the paper
         """
+
         self.camera_parameters = camera_parameters
         self.n_viewpoints = n_viewpoints
         self.n_3dpoints = n_3dpoints
@@ -99,10 +100,6 @@ class SBA(object):
         return poses, points3d
 
     def projection(self, p):
-        """
-        function :math:`f` which
-        """
-
         poses, points3d = self.decompose(p)
         P = projection(self.camera_parameters, poses, points3d)
         return P.flatten()

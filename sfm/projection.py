@@ -2,6 +2,7 @@ import numpy as np
 from sfm.jacobian import camera_pose_jacobian, structure_jacobian
 from sfm.config import n_pose_parameters, n_point_parameters
 
+
 def cross_product_matrix(v):
     x, y, z = v
     return np.array([
@@ -76,9 +77,10 @@ def jacobian_projection(camera_parameters, poses, points3d):
 
     n_viewpoints = poses.shape[0]
     n_3dpoints = points3d.shape[0]
+    K = camera_parameters.matrix
+
     P = np.empty((n_3dpoints, n_viewpoints, 2, n_pose_parameters))
     S = np.empty((n_3dpoints, n_viewpoints, 2, n_point_parameters))
-    K = camera_parameters.matrix
 
     for j, a in enumerate(poses):
         v, t = a[:3], a[3:]
@@ -109,7 +111,30 @@ def pi(p):
     return p[0:2] / p[2]
 
 
-def projection(camera_parameters, points3d, poses):
+def projection(camera_parameters, poses, points3d):
+    """
+    Project 3D points to multiple image planes
+
+    Args:
+        camera_parameters (CameraParameters): Camera intrinsic parameters
+        poses (np.ndarray): Pose of each camera
+        points3d (np.ndarray): 3D points to be projected on each image plane
+
+    Returns:
+        Projected images of shape (n_viewpoints * n_image_points, 2)
+        If n_viewpoints = 2 and n_3dpoints = 3, the result array is
+
+        ..
+            [[x_11, y_11],
+             [x_12, y_12],
+             [x_21, y_21],
+             [x_22, y_22],
+             [x_31, y_31],
+             [x_32, y_32]]
+
+        where [x_ij, y_ij] is a predicted projection of point `i` on image`j`
+    """
+
     K = camera_parameters.matrix
 
     n_viewpoints = poses.shape[0]
@@ -129,14 +154,15 @@ def transform3d(R, t, b):
     return R.dot(b) + t
 
 
-def projection_(K, R, t, b):
+def projection_(K: np.ndarray, R: np.ndarray, t: np.ndarray,
+                b: np.ndarray) -> np.ndarray:
     """
     Args:
-        K
+        K: Camera intrinsic matrix
         b: 3D point :math:`b = [x, y, z]` to be projected onto the image plane
 
     Returns:
-        Image of :math:`b`
+        Projected image of :math:`b`
     """
 
     return pi(np.dot(K, transform3d(R, t, b)))
