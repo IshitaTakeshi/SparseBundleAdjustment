@@ -6,6 +6,8 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 
+from scipy import sparse
+
 from sfm.camera import CameraParameters
 from sfm.projection import (cross_product_matrix, rodrigues, projection_,
                             jacobian_wrt_exp_coordinates, jacobian_pi,
@@ -78,21 +80,21 @@ def test_jaocobian_pose_and_3dpoint():
 
     def test_rotation_approximation():
         b = np.array([1.0, 1.0, 1.0])
-        t = np.array([0.0, 0.0, 0.0])
+        t = np.array([1.0, 2.0, 2.0])
 
-        v0 = np.array([1.00, 1.00, 1.00])
-        v1 = np.array([0.95, 1.05, 1.08])
-
-        R0 = rodrigues(v0)
+        v0 = np.array([1.00, 0.502, 0.050])
+        v1 = np.array([1.01, 0.500, 0.051])
 
         a0 = np.hstack([v0, t])
         a1 = np.hstack([v1, t])
 
-        p1 = projection_(K, rodrigues(v1), t, b)
-        p0 = projection_(K, rodrigues(v0), t, b)
-        JA, JB = jacobian_pose_and_3dpoint(K, R0, v0, t, b)
-        print("diff         : ", p1 - p0)
-        print("linearization: ", np.dot(JA, a1-a0))
+        x0 = projection_(K, rodrigues(v0), t, b)
+        x1 = projection_(K, rodrigues(v1), t, b)
+        JA, JB = jacobian_pose_and_3dpoint(K, rodrigues(v0), v0, t, b)
+
+        print("JA.dot([dv 0])")
+        print("diff         : ", x1 - x0)
+        print("linearization: ", JA.dot(a1-a0))
 
     def test_translation_approximation():
         b = np.array([1.0, 1.0, 1.0])
@@ -104,11 +106,13 @@ def test_jaocobian_pose_and_3dpoint():
         a0 = np.hstack([v, t0])
         a1 = np.hstack([v, t1])
 
-        p1 = projection_(K, rodrigues(v), t1, b)
-        p0 = projection_(K, rodrigues(v), t0, b)
+        x0 = projection_(K, R, t0, b)
+        x1 = projection_(K, R, t1, b)
         JA, JB = jacobian_pose_and_3dpoint(K, R, v, t0, b)
-        print("diff         : ", p1 - p0)
-        print("linearization: ", np.dot(JA, a1-a0))
+
+        print("JA.dot([0 dt])")
+        print("diff         : ", x1 - x0)
+        print("linearization: ", JA.dot(a1-a0))
 
     def test_3dpoint_approximation():
         b0 = np.array([1.00, 1.00, 1.00])
@@ -117,15 +121,39 @@ def test_jaocobian_pose_and_3dpoint():
         R = rodrigues(v)
         t = np.array([1.00, 1.00, 1.00])
 
-        p1 = projection_(K, rodrigues(v), t, b1)
-        p0 = projection_(K, rodrigues(v), t, b0)
+        x0 = projection_(K, R, t, b0)
+        x1 = projection_(K, R, t, b1)
         JA, JB = jacobian_pose_and_3dpoint(K, R, v, t, b0)
-        print("diff         : ", p1 - p0)
-        print("linearization: ", np.dot(JB, b1-b0))
+
+        print("JB.dot(db)")
+        print("diff         : ", x1 - x0)
+        print("linearization: ", JB.dot(b1-b0))
+
+    def test_pose_and_3dpoint_approximation():
+        b0 = np.array([1.00, 1.00, 1.00])
+        b1 = np.array([1.03, 0.98, 1.02])
+
+        v0 = np.array([1.00, 0.502, 0.500])
+        v1 = np.array([1.01, 0.500, 0.501])
+
+        t0 = np.array([1.00, 1.00, 1.00])
+        t1 = np.array([0.97, 1.02, 0.99])
+
+        a0 = np.hstack([v0, t0])
+        a1 = np.hstack([v1, t1])
+
+        x0 = projection_(K, rodrigues(v0), t0, b0)
+        x1 = projection_(K, rodrigues(v1), t1, b1)
+        JA, JB = jacobian_pose_and_3dpoint(K, rodrigues(v0), v0, t0, b0)
+
+        print("JA.dot([dv dt]) + JB.dot(db)")
+        print("diff         : ", x1 - x0)
+        print("linearization: ", JA.dot(a1-a0) + JB.dot(b1-b0))
 
     test_rotation_approximation()
     test_translation_approximation()
     test_3dpoint_approximation()
+    test_pose_and_3dpoint_approximation()
 
 
 def test_projection_():
