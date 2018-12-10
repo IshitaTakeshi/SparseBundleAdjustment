@@ -112,15 +112,17 @@ def pi(p):
 def projection(camera_parameters, points3d, poses):
     K = camera_parameters.matrix
 
-    P = []
-    for a in poses:
+    n_viewpoints = poses.shape[0]
+    n_3dpoints = points3d.shape[0]
+
+    X = np.empty((n_3dpoints, n_viewpoints, 2))
+    for j, a in enumerate(poses):
         v, t = a[:3], a[3:]
         R = rodrigues(v)
-        for b in points3d:
-            p = projection_(K, R, t, b)
-            P.append(p)
-    P = np.array(P)
-    return P
+        for i, b in enumerate(points3d):
+            X[i, j] = projection_(K, R, t, b)
+    X = np.array(X)
+    return X
 
 
 def transform3d(R, t, b):
