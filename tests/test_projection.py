@@ -9,18 +9,28 @@ from numpy.testing import assert_array_equal, assert_array_almost_equal
 from scipy import sparse
 
 from sfm.camera import CameraParameters
-from sfm.projection import (cross_product_matrix, rodrigues, projection_,
+from sfm.projection import (cross_product_matrix, rodrigues, transform3d,
+                            projection_, projection,
                             jacobian_wrt_exp_coordinates, jacobian_pi,
                             jacobian_pose_and_3dpoint)
 
 
 def test_cross_product_matrix():
-    GT = np.array([
-        [0, -3, 2],
-        [3, 0, -1],
-        [-2, 1, 0]
+    V = np.array([
+        [3, 1, 2],
+        [-2, 4, 3],
     ])
-    assert_array_equal(cross_product_matrix([1, 2, 3]), GT)
+
+    GT = np.array([
+        [[0, -2, 1],
+         [2, 0, -3],
+         [-1, 3, 0]],
+        [[0, -3, 4],
+         [3, 0, 2],
+         [-4, -2, 0]]
+    ])
+
+    assert_array_equal(cross_product_matrix(V), GT)
 
 
 def test_jacobian_wrt_exp_coordinates():
@@ -48,23 +58,6 @@ def test_jacobian_wrt_exp_coordinates():
 
     R = rodrigues(v)
     assert_array_almost_equal(jacobian_wrt_exp_coordinates(R, v, u), GT)
-
-
-def test_rodrigues():
-    theta = np.pi / np.sqrt(2)
-    vv = np.array([
-        [1 / 2, 0, -1 / 2],
-        [0, 0, 0],
-        [-1 / 2, 0, 1 / 2]
-    ])
-    K = np.array([
-        [0, 1 / np.sqrt(2), 0],
-        [-1 / np.sqrt(2), 0, -1 / np.sqrt(2)],
-        [0, 1 / np.sqrt(2), 0]
-    ])
-    GT = np.cos(theta) * np.eye(3) + (1-np.cos(theta)) * vv + np.sin(theta) * K
-
-    assert_array_almost_equal(rodrigues([np.pi / 2, 0, - np.pi / 2]), GT)
 
 
 def test_jacobian_pi():
@@ -156,6 +149,114 @@ def test_jaocobian_pose_and_3dpoint():
     test_pose_and_3dpoint_approximation()
 
 
+def test_rodrigues():
+    V = np.array([
+        [np.pi / 2, 0, 0],
+        [0, -np.pi / 2, 0],
+        [0, 0, np.pi],
+        [-np.pi, 0, 0]
+    ])
+
+    R = rodrigues(V)
+
+    GT = np.empty((4, 3, 3))
+
+    GT[0] = np.array([
+        [1, 0, 0],
+        [0, 0, -1],
+        [0, 1, 0]
+    ])
+
+    GT[1] = np.array([
+        [0, 0, -1],
+        [0, 1, 0],
+        [1, 0, 0]
+    ])
+
+    GT[2] = np.array([
+        [-1, 0, 0],
+        [0, -1, 0],
+        [0, 0, 1]
+    ])
+
+    GT[3] = np.array([
+        [1, 0, 0],
+        [0, -1, 0],
+        [0, 0, -1]
+    ])
+
+    assert_array_almost_equal(R, GT)
+
+
+def test_transform3d():
+    poses = np.array([
+        [np.pi / 2, 0, 0, 1, -3, 8],
+        [0, -np.pi / 2, 0, -2, 4, 5],
+        [0, 0, np.pi, 8, 1, 7]
+    ])
+
+    points3d = np.array([
+        [-2, 2, 1],
+        [1, -2, 3],
+        [-3, 1, 4],
+        [1, 8, 2]
+    ])
+
+    GT = np.array([
+        [[-1, -4, 10],  # [-2, -1, 2] + [1, -3, 8] = [-1, -4, 10]
+         [-3, 6, 3],  # [-1, 2 -2] + [-2, 4, 5] = [-3, 6, 3]
+         [10, -1, 8]],  # [2, -2, 1] + [8, 1, 7] = [10, -1, 8]
+        [[2, -6, 6],  # [1, -3, -2] + [1, -3, 8] = [2, -6, 6]
+         [-5, 2, 6],  # [-3, -2, 1] + [-2, 4, 5] = [-5, 2, 6]
+         [7, 3, 10]],  # [-1, 2, 3] + [8, 1, 7] = [7, 3, 10]
+        [[-2, -7, 9],  # [-3, -4, 1] + [1, -3, 8] = [-2, -7, 9]
+         [-6, 5, 2],  # [-4, 1, -3] + [-2, 4, 5] = [-6, 5, 2]
+         [11, 0, 11]],  # [3, -1, 4] + [8, 1, 7] = [11, 0, 11]
+        [[2, -5, 16],  # [1, -2, 8] + [1, -3, 8] = [2, -5, 16]
+         [-4, 12, 6],  # [-2, 8, 1] + [-2, 4, 5] = [-4, 12, 6]
+         [7, -7, 9]]  # [-1, -8, 2] + [8, 1, 7] = [7, -7, 9]
+    ]).astype(np.float64)
+
+    X = transform3d(poses, points3d)
+    np.set_printoptions(suppress=True)
+    assert_array_almost_equal(X, GT)
+
+
+def test_projection():
+    camera_parameters = CameraParameters(10, 0)
+
+    poses = np.array([
+        [np.pi / 2, 0, 0, 1, -3, 8],
+        [0, -np.pi / 2, 0, -2, 4, 5],
+        [0, 0, np.pi, 8, 1, 7]
+    ])
+
+    points3d = np.array([
+        [-2, 2, 1],
+        [1, -2, 3],
+        [-3, 1, 4],
+        [1, 8, 2]
+    ])
+
+    GT = np.array([
+        [[-1, -4],  # [-2, -1, 2] + [1, -3, 8] = [-1, -4, 10]
+         [-10, 20],  # [-1, 2 -2] + [-2, 4, 5] = [-3, 6, 3]
+        [100/8, -10/8]],  # [2, -2, 1] + [8, 1, 7] = [10, -1, 8]
+        [[20/6, -10],  # [1, -3, -2] + [1, -3, 8] = [2, -6, 6]
+         [-50/6, 20/6],  # [-3, -2, 1] + [-2, 4, 5] = [-5, 2, 6]
+         [7, 3]],  # [-1, 2, 3] + [8, 1, 7] = [7, 3, 10]
+        [[-20/9, -70/9],  # [-3, -4, 1] + [1, -3, 8] = [-2, -7, 9]
+         [-30, 25],  # [-4, 1, -3] + [-2, 4, 5] = [-6, 5, 2]
+         [10, 0]],  # [3, -1, 4] + [8, 1, 7] = [11, 0, 11]
+        [[20/16, -50/16],  # [1, -2, 8] + [1, -3, 8] = [2, -5, 16]
+         [-40/6, 20],  # [-2, 8, 1] + [-2, 4, 5] = [-4, 12, 6]
+         [70/9, -70/9]]  # [-1, -8, 2] + [8, 1, 7] = [7, -7, 9]
+    ]).astype(np.float64)
+
+    X = projection(camera_parameters, poses, points3d)
+    assert_array_almost_equal(X, GT)
+
+
 def test_projection_():
     R = np.array([
         [np.cos(np.pi / 4), 0, np.sin(np.pi / 4)],
@@ -171,14 +272,24 @@ def test_projection_():
     assert_array_almost_equal(projection_(K, R, t, b), GT)
 
 
-def test_jacobian_translation():
-    pass
-
+def print_rotation_approximation():
+    v0 = np.array([1.00, 1.00, 1.00])
+    v1 = np.array([1.01, 1.01, 1.01])
+    u = np.array([-2.5, 1, 1.5])
+    J = jacobian_wrt_exp_coordinates(rodrigues(v0), v0, u)
+    x1 = np.dot(rodrigues(v1), u)
+    x0 = np.dot(rodrigues(v0), u)
+    print("exp")
+    print("diff         : ", x1 - x0)
+    print("linearization: ", np.dot(J, v1-v0))
 
 
 test_cross_product_matrix()
 test_rodrigues()
-test_jacobian_wrt_exp_coordinates()
-test_projection_()
-test_jaocobian_pose_and_3dpoint()
-test_jacobian_pi()
+test_transform3d()
+# test_jacobian_wrt_exp_coordinates()
+test_projection()
+# test_projection_()
+# test_jaocobian_pose_and_3dpoint()
+# test_jacobian_pi()
+# print_rotation_approximation()
