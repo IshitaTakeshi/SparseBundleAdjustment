@@ -66,6 +66,13 @@ def jacobian_wrt_exp_coordinates(R, v, b):
 
 # @profile
 def jacobian_pose_and_3dpoint(K, R, v, t, b):
+    """
+    Calculate jacobians w.r.t pose parameters `a = [v, t]` and
+    3D points `b` respectively
+
+    Returns: (JA, JB) where JA = dx / da and JB = dx / db
+    """
+
     p = np.dot(K, transform3d(R, t, b))
     JP = jacobian_pi(p)
     JV = jacobian_wrt_exp_coordinates(R, v, b)
