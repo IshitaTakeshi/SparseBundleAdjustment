@@ -1,7 +1,7 @@
 
 import numpy as np
 from numpy.linalg import inv
-from scipy.sparse import bsr_matrix
+from scipy.sparse import csr_matrix
 from scipy import sparse
 
 from sfm.projection import projection, jacobian_projection
@@ -205,4 +205,4 @@ def inv_covariance(n_3dpoints, n_viewpoints, covariances=None):
     data = inv_covariances.flatten()
     row = row_indices()
     col = column_indices()
-    return bsr_matrix((data, (row, col)), blocksize=(2, 2))
+    return csr_matrix((data, (row, col)))

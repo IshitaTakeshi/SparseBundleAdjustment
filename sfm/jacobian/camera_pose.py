@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.sparse import bsr_matrix
+from scipy.sparse import csr_matrix
 
 
 def row_indices(n_3dpoints, n_viewpoints, n_pose_parameters):
@@ -30,4 +30,4 @@ def camera_pose_jacobian(jacobians):
     row = row_indices(n_3dpoints, n_viewpoints, n_pose_parameters)
     col = col_indices(n_3dpoints, n_viewpoints, n_pose_parameters)
     data = jacobians.flatten()
-    return bsr_matrix((data, (row, col)), blocksize=((2, n_pose_parameters)))
+    return csr_matrix((data, (row, col)))

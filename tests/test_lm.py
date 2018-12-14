@@ -6,7 +6,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
-from scipy.sparse import bsr_matrix
+from scipy.sparse import csr_matrix
 
 from sfm.lm import LevenbergMarquardt
 
@@ -16,7 +16,7 @@ def f(p):
 
 
 def J(p):
-    return bsr_matrix([
+    return csr_matrix([
         [-20 * p[0], 10],
         [-1, 0]
     ])
