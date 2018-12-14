@@ -60,13 +60,13 @@ def jacobian_pose_and_3dpoint(K, R, v, t, b):
     return JA, JB
 
 
-def jacobian_projection(camera_parameters, poses, points3d):
+def jacobian_projection(camera_parameters, points3d, poses):
     """
     Args:
-        poses (np.ndarray): Camera poses of shape
-            (n_viewpoints, n_pose_parameters)
         points3d (np.ndarray): 3D point coordinates of shape
             (n_3dpoints, n_point_parameters)
+        poses (np.ndarray): Camera poses of shape
+            (n_viewpoints, n_pose_parameters)
 
     Returns:
         A: Left side of the Jacobian.
@@ -75,9 +75,13 @@ def jacobian_projection(camera_parameters, poses, points3d):
            :math:`\\frac{\\partial X}{\\partial \\b_i}, i=1,\dots,n`
     """
 
-    n_viewpoints = poses.shape[0]
-    n_3dpoints = points3d.shape[0]
     K = camera_parameters.matrix
+
+    assert(points3d.shape[1] == n_point_parameters)
+    assert(poses.shape[1] == n_pose_parameters)
+
+    n_3dpoints = points3d.shape[0]
+    n_viewpoints = poses.shape[0]
 
     P = np.empty((n_3dpoints, n_viewpoints, 2, n_pose_parameters))
     S = np.empty((n_3dpoints, n_viewpoints, 2, n_point_parameters))
@@ -111,34 +115,26 @@ def pi(p):
     return p[0:2] / p[2]
 
 
-def projection(camera_parameters, poses, points3d):
+def projection(camera_parameters, points3d, poses):
     """
     Project 3D points to multiple image planes
 
     Args:
         camera_parameters (CameraParameters): Camera intrinsic parameters
-        poses (np.ndarray): Pose of each camera
         points3d (np.ndarray): 3D points to be projected on each image plane
+        poses (np.ndarray): Pose of each camera
 
     Returns:
-        Projected images of shape (n_viewpoints * n_image_points, 2)
-        If n_viewpoints = 2 and n_3dpoints = 3, the result array is
-
-        ..
-            [[x_11, y_11],
-             [x_12, y_12],
-             [x_21, y_21],
-             [x_22, y_22],
-             [x_31, y_31],
-             [x_32, y_32]]
-
-        where [x_ij, y_ij] is a predicted projection of point `i` on image`j`
+        Projected images of shape (n_3dpoints, n_viewpoints, 2)
     """
 
     K = camera_parameters.matrix
 
-    n_viewpoints = poses.shape[0]
     n_3dpoints = points3d.shape[0]
+    n_viewpoints = poses.shape[0]
+
+    assert(points3d.shape[1] == n_point_parameters)
+    assert(poses.shape[1] == n_pose_parameters)
 
     X = np.empty((n_3dpoints, n_viewpoints, 2))
     for j, a in enumerate(poses):

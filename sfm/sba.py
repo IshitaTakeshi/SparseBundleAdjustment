@@ -57,23 +57,23 @@ def initial_3dpoints(n_3dpoints):
 
 
 class SBA(object):
-    def __init__(self, camera_parameters, n_viewpoints, n_3dpoints):
+    def __init__(self, camera_parameters, n_3dpoints, n_viewpoints):
         """
         Args:
             camera_parameters (CameraParameters): Camera intrinsic parameters
-            n_viewpoints (int) : Number of viewpoints. `m` in the paper
             n_3dpoints (int): Number of 3D points to be reconstructed. `n` in the paper
+            n_viewpoints (int) : Number of viewpoints. `m` in the paper
         """
 
         self.camera_parameters = camera_parameters
-        self.n_viewpoints = n_viewpoints
         self.n_3dpoints = n_3dpoints
+        self.n_viewpoints = n_viewpoints
 
     @property
     def initial_p(self):
-        poses = initial_poses(self.n_viewpoints)
         points3d = initial_3dpoints(self.n_3dpoints)
-        return self.compose(poses, points3d)
+        poses = initial_poses(self.n_viewpoints)
+        return self.compose(points3d, poses)
 
     @property
     def length_all_3dpoints(self):
@@ -87,28 +87,49 @@ class SBA(object):
     def total_parameter_size(self):
         return self.length_all_3dpoints + self.length_all_poses
 
-    def compose(self, poses, points3d):
+    def compose(self, points3d, poses):
+        # This part is confusing. The left side of the vector p is
+        # `poses` and the right side is `points3d`
         return np.concatenate((poses.flatten(), points3d.flatten()))
 
     def decompose(self, p):
         N = self.length_all_poses
         M = self.length_all_3dpoints
+
         assert(len(p) == self.total_parameter_size)
-        # FIXME This part is confusing. The order should be reversed
+        # This part is confusing. The left side of the vector p is
+        # `poses` and the right side is `points3d`
+
         poses = p[:N].reshape(self.n_viewpoints, n_pose_parameters)
         points3d = p[N:N+M].reshape(self.n_3dpoints, n_point_parameters)
-        return poses, points3d
+        return points3d, poses
 
+    # @profile
     def projection(self, p):
-        poses, points3d = self.decompose(p)
-        P = projection(self.camera_parameters, poses, points3d)
+        """
+        If n_viewpoints = 2 and n_3dpoints = 3, the result array is
+
+        ..
+            [x_11,
+             x_12,
+             x_11,
+             x_22,
+             x_21,
+             x_22]
+
+        where [x_ij, y_ij] is a predicted projection of point `i` on image`j`
+        """
+
+        points3d, poses = self.decompose(p)
+        P = projection(self.camera_parameters, points3d, poses)
         return P.flatten()
 
+    # @profile
     def jacobian(self, p):
-        poses, points3d = self.decompose(p)
+        points3d, poses = self.decompose(p)
         A, B = jacobian_projection(
             self.camera_parameters,
-            poses, points3d
+            points3d, poses
         )
 
         J = sparse.hstack((A, B))
@@ -163,8 +184,8 @@ def calc_update(A, B, C_inv, epsilon, n_3dpoints, n_viewpoints, mu):
 
 
 # FIXME the interface looks redundant
-def inv_covariance(n_viewpoints, n_3dpoints, covariances=None):
-    size = n_viewpoints * n_3dpoints  # number of 2d points
+def inv_covariance(n_3dpoints, n_viewpoints, covariances=None):
+    size = n_3dpoints * n_viewpoints   # number of 2d points
 
     if covariances is None:
         return sparse.eye(2 * size)

@@ -74,12 +74,12 @@ def test_camera_pose_jacobian_indices():
     n_pose_parameters = 4
 
     assert_array_equal(
-        CJ.row_indices(n_viewpoints, n_3dpoints, n_pose_parameters),
+        CJ.row_indices(n_3dpoints, n_viewpoints, n_pose_parameters),
         row
     )
 
     assert_array_equal(
-        CJ.col_indices(n_viewpoints, n_3dpoints, n_pose_parameters),
+        CJ.col_indices(n_3dpoints, n_viewpoints, n_pose_parameters),
         col
     )
 
@@ -150,12 +150,12 @@ def test_structure_jacobian_indices():
     n_point_parameters = 4
 
     assert_array_equal(
-        SJ.row_indices(n_viewpoints, n_3dpoints, n_point_parameters),
+        SJ.row_indices(n_3dpoints, n_viewpoints, n_point_parameters),
         row
     )
 
     assert_array_equal(
-        SJ.col_indices(n_viewpoints, n_3dpoints, n_point_parameters),
+        SJ.col_indices(n_3dpoints, n_viewpoints, n_point_parameters),
         col
     )
 
