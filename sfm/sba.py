@@ -110,17 +110,18 @@ class SBA(object):
         If n_viewpoints = 2 and n_3dpoints = 3, the result array is
 
         ..
-            [x_11,
-             x_12,
-             x_11,
-             x_22,
-             x_21,
-             x_22]
+            [x_11, y_11
+             x_12, y_12
+             x_21, y_21
+             x_22, y_22
+             x_31, y_31
+             x_32, y_32]
 
         where [x_ij, y_ij] is a predicted projection of point `i` on image`j`
         """
 
         points3d, poses = self.decompose(p)
+        # P.shape == (n_3dpoints, n_viewpoints, 2)
         P = projection(self.camera_parameters, points3d, poses)
         return P.flatten()
 
