@@ -127,6 +127,15 @@ class SBA(object):
 
     # @profile
     def jacobian(self, p):
+        """
+
+        Returns:
+            Jacobian of shape
+            (n_3dpoints * n_viewpoints * 2,
+             n_viewpoints * n_pose_parameters +
+             n_3dpoints * n_point_parameters)
+        """
+
         points3d, poses = self.decompose(p)
         A, B = jacobian_projection(
             self.camera_parameters,
