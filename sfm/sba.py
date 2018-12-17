@@ -120,6 +120,14 @@ class SBA(object):
         where [x_ij, y_ij] is a predicted projection of point `i` on image`j`
         """
 
+        # Honestly the definition of the observation is confusing.
+        # P.shape == (n_viewpoints, n_3dpoints, 2)
+        # is more clear and intuitive than
+        # P.shape == (n_3dpoints, n_viewpoints, 2)
+        # because `P[i]` contains observation from the view point `i`.
+        # Although the observation sequence have to be correctly
+        # associated with the rows of J (= sba.jacobian(p))
+
         points3d, poses = self.decompose(p)
         # P.shape == (n_3dpoints, n_viewpoints, 2)
         P = projection(self.camera_parameters, points3d, poses)
@@ -128,9 +136,11 @@ class SBA(object):
     # @profile
     def jacobian(self, p):
         """
+        Calculate J = dx / dp where x = self.projection(p)
 
         Returns:
             Jacobian of shape
+            (len(x), len(p)) =
             (n_3dpoints * n_viewpoints * 2,
              n_viewpoints * n_pose_parameters +
              n_3dpoints * n_point_parameters)
@@ -143,7 +153,7 @@ class SBA(object):
         )
 
         J = sparse.hstack((A, B))
-        return J
+        return J.tocsr()
 
 
 def inv_v(V):
