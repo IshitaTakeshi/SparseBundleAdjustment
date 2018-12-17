@@ -7,6 +7,10 @@ import numpy as np
 
 
 def parse(row):
+    """
+    Parse one row of the file
+    """
+
     n_frames = int(row[3])
     ground_truth = [float(e) for e in row[:3]]
 
@@ -14,25 +18,28 @@ def parse(row):
     indices = []
     for i in range(n_frames):
         k = 4+i*3
-        frame_index = int(row[k])
+        frame_index = int(row[k])  # from which observation
         observation = [float(e) for e in row[k+1:k+3]]
 
         data.append(observation)
+
+        # indices of 2D observation
         indices += [2 * frame_index, 2 * frame_index + 1]
     return ground_truth, data, indices
 
 
 def strip(f):
     raw = f.read()
+    # replace multiple whitespaces with one white space
     raw = re.sub(r" +", " ", raw)
     f = StringIO(raw)
-    f = filter(lambda row: row[0] != '#', f)
+    f = filter(lambda row: row[0] != '#', f)  # ignore comment lines
     return f
 
 
 def sparse_nan_matrix(data, indices, indptr):
     """
-    Same interface as scipy.sparse.csr_matrix
+    Same interface as scipy.sparse.csr_matrix, but fill empty fields with np.nan
     """
 
     n_columns = np.max(indices) + 1
@@ -46,8 +53,13 @@ def sparse_nan_matrix(data, indices, indptr):
     return M
 
 
-
 def load_sba(path):
+    """
+    ground_truth (np.ndarray): Contains true 3D points
+    observations (np.ndarray): 2D observations of shape
+        (n_3dpoints, n_viewpoints, 2). Unobserved points are filled with np.nan
+    """
+
     with open(path) as f:
         reader = csv.reader(strip(f), delimiter=' ')
 
@@ -64,10 +76,11 @@ def load_sba(path):
 
     ground_truth = np.array(ground_truth)
     data = np.array(data)
-    M = sparse_nan_matrix(data.flatten(), indices, indptr)
-    return ground_truth, M
+    observations = sparse_nan_matrix(data.flatten(), indices, indptr)
 
+    assert(observations.shape[1] % 2 == 0)
+    n_3dpoints = observations.shape[0]
+    n_viewpoints = observations.shape[1] // 2
 
-GT, M = load_sba("data/9pts.txt")
-np.set_printoptions(precision=2, linewidth=100)
-print(M)
+    observations = observations.reshape(n_viewpoints, n_3dpoints, 2)
+    return ground_truth, observations
