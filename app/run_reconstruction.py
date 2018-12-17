@@ -11,7 +11,8 @@ from sfm.camera import CameraParameters
 from dataset.sba import load_sba
 from app.optimizers import optimize_lm, optimize_scipy
 
-def load_observation(filename):
+
+def load_npy_observation(filename):
     # observation.shape == (n_viewpoints, n_3dpoints, 2)
     observation = np.load(filename)
     # observation.shape == (n_3dpoints, n_viewpoints, 2)
@@ -26,7 +27,10 @@ def approximate_camera_parameters(image_shape):
 
 def main():
     camera_parameters = CameraParameters(focal_length=1, offset=0)
-    observation, n_3dpoints, n_viewpoints = load_observation(sys.argv[1])
+    # observations = load_npy_observation(filename)
+    ground_truth, observations = load_sba("./data/54pts.txt")
+
+    n_3dpoints, n_viewpoints = observations.shape[:2]
 
     print("n_3dpoints: ", n_3dpoints)
     print("n_viewpoints: ", n_viewpoints)
