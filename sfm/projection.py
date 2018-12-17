@@ -142,7 +142,6 @@ def projection(camera_parameters, points3d, poses):
         R = rodrigues(v)
         for i, b in enumerate(points3d):
             X[i, j] = projection_(K, R, t, b)
-    X = np.array(X)
     return X
 
 
