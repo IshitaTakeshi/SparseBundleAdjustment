@@ -8,31 +8,15 @@ from sfm.sba import SBA
 from sfm.lm import LevenbergMarquardt
 from sfm.camera import CameraParameters
 
+from dataset.sba import load_sba
+from app.optimizers import optimize_lm, optimize_scipy
 
 def load_observation(filename):
     # observation.shape == (n_viewpoints, n_3dpoints, 2)
     observation = np.load(filename)
     # observation.shape == (n_3dpoints, n_viewpoints, 2)
     observation = np.swapaxes(observation, 0, 1)
-    n_3dpoints, n_viewpoints = observation.shape[:2]
-    observation = observation.flatten()
-    return observation, n_3dpoints, n_viewpoints
-
-
-def plot_reconstructed(*points3d):
-    from matplotlib import pyplot as plt
-    from mpl_toolkits.mplot3d import Axes3D
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    for i, P in enumerate(points3d):
-        ax.plot(P[:, 0], P[:, 1], P[:, 2], '.', label=str(i))
-        ax.set_xlabel('x axis')
-        ax.set_ylabel('y axis')
-        ax.set_zlabel('z axis')
-        ax.view_init(elev=135, azim=90)
-        ax.legend()
-    ax.set_aspect('equal', 'datalim')
-    plt.show()
+    return observation
 
 
 def approximate_camera_parameters(image_shape):
