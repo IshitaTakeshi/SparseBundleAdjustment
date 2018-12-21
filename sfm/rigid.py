@@ -14,6 +14,22 @@ def cross_product_matrix(V):
 
 
 def rodrigues(V):
+    """
+    # see
+    # https://docs.opencv.org/2.4/modules/calib3d/doc/
+    # camera_calibration_and_3d_reconstruction.html#rodrigues
+
+    .. codeblock:
+        theta = np.linalg.norm(r)
+        r = r / theta
+        K = cross_product_matrix_(r)
+        I = np.eye(3, 3)
+        return I + np.sin(theta) * K + (1-np.cos(theta)) * np.dot(K, K)
+
+    # I + sin(theta) * K + (1-cos(theta)) * dot(K, K) is equivalent to
+    # cos(theta) * I + (1-cos(theta)) * outer(r, r) + sin(theta) * K
+    """
+
     assert(V.shape[1] == 3)
 
     N = V.shape[0]
