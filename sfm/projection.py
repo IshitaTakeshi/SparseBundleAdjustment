@@ -197,6 +197,9 @@ def jacobian_projection(camera_parameters, points3d, poses):
 
 
 def pi(p):
+    """
+    Project a 3D point onto a 2D image plane
+    """
     return p[0:2] / p[2]
 
 
