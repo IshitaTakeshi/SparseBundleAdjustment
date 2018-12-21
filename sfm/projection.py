@@ -45,6 +45,14 @@ def elementwise_outer(A, B):
 def jacobian_wrt_exp_coordinates(V, B):
     """
     Calculate
+    .. math::
+        \\frac{\partial (R(\\mathbf{v})\\mathbf{b} + \\mathbf{t})}
+              {\\partial \\mathbf{v}}
+
+    See Eq. (8) in https://arxiv.org/abs/1312.0788
+    """
+
+    """
     JR[i, j] = d(R(v) * b[i] + t[j]) / dv
              = d(R(v) * b[i]) / dv  at v = v[j]
 
@@ -94,25 +102,6 @@ def jacobian_wrt_exp_coordinates(V, B):
 
 
 # @profile
-def jacobian_wrt_exp_coordinates_(R, v, b):
-    """
-    Calculate
-    .. math::
-    \\begin{align}
-        \\frac{\partial (R(\\mathbf{v})\\mathbf{b} + \\mathbf{t})}{\\partial \\mathbf{v}}
-        &= ...
-    \\end{align}
-    """
-
-    # See Eq. (8) in https://arxiv.org/abs/1312.0788
-
-    B = cross_product_matrix(b)
-    V = cross_product_matrix(v)
-    I = np.eye(3)
-    S = np.outer(v, v) + np.dot(R.T - I, V)
-    return -R.dot(B).dot(S) / np.dot(v, v)
-
-
 def jacobian_projection(camera_parameters, points3d, poses):
     # TODO add derivation of the equation
     """
@@ -204,18 +193,6 @@ def jacobian_projection(camera_parameters, points3d, poses):
     JA = camera_pose_jacobian(P)
     JB = structure_jacobian(S)
 
-    return JA, JB
-
-
-def jacobian_pose_and_3dpoint_(K, R, v, t, b):
-
-    p = np.dot(K, transform3d(R, t, b))
-    JP = jacobian_pi(p)  # d(pi) / dp at p = K(R * b + t)
-    JV = jacobian_wrt_exp_coordinates(R, v, b)  # d(R(v) * b + t) / dv
-    JT = JP.dot(K)
-    JR = JT.dot(JV)  # JP.dot(K).dot(JV)
-    JA = np.hstack([JR, JT])
-    JB = JT.dot(R)  # JP.dot(K).dot(R)
     return JA, JB
 
 
