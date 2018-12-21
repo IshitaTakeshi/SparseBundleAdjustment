@@ -33,8 +33,88 @@ def jacobian_pi(p):
     ])
 
 
+def jacobian_pi(P):
+    # TODO check if z > 0
+
+    # jacobian_pi(P)[i] = [
+    #     [1 / z, 0, -x / pow(z, 2)],
+    #     [0, 1 / z, -y / pow(z, 2)]
+    # ]
+    # where x, y, z = P[i]
+
+    z = P[:, 2]
+    z_squared = np.power(z, 2)
+
+    J = np.zeros((P.shape[0], 2, 3))
+    J[:, 0, 0] = J[:, 1, 1] = 1 / z
+    J[:, :, 2] = -P[:, 0:2] / z_squared.reshape(-1, 1)
+    return J
+
+
+def elementwise_outer(A, B):
+    assert(A.shape[0] == B.shape[0])
+    # Equivalent to np.vstack([np.outer(a, b) for a, b in zip(A, B)])
+    return np.einsum('ij,ik->ijk', A, B)
+
+
+def elementwise_dot(A, B):
+    # Equivalent to np.array([np.dot(a, b) for a, b in zip(A, B)])
+    return np.einsum('ij,ij->i', A, B)
+
+
+def jacobian_wrt_exp_coordinates(V, B):
+    """
+    Calculate
+    JR[i, j] = d(R(v) * b[i] + t[j]) / dv
+             = d(R(v) * b[i]) / dv  at v = v[j]
+
+    JR[i, j] = -R[j] * XB[i] * W[j] / dot(vs[j], vs[j])
+
+    where
+
+    W[j] = outer(vs[j], vs[j]) + (R[j].T - I) * XV[j]
+
+    XB[i] = cross_product_matrix(B[i])
+    XV[j] = cross_product_matrix(V[j])
+    """
+
+    # See Eq. (8) in https://arxiv.org/abs/1312.0788
+
+    # XV[i] is the cross product matrix of V[i]
+    # XV.shape == (n_viewpoints, 3, 3)
+    XV = cross_product_matrix(V)
+    # Q.shape == (n_viewpoints, 3, 3)
+    Q = elementwise_outer(V, V)
+
+    # R.shape == (n_viewpoints, 3, 3)
+    R = rodrigues(V)
+    # Equivalent to [R_.T for R_ in R]
+    RT = np.swapaxes(R, 1, 2)
+    I = np.eye(3).reshape(1, 3, 3)  # align the shape
+
+    # W.shape == (n_viewpoints, 3, 3)
+    W = np.einsum('ijk,ikl->ijl', RT - I, XV)
+
+    Y = Q + W
+
+    # XB.shape == (n_3dpoints, 3, 3)
+    XB = cross_product_matrix(B)
+    # S.shape == (n_3dpoints, n_viewpoints, 3, 3)
+    S = np.einsum('ijk,lkm->lijm', R, XB)
+    # S.shape == (n_3dpoints, n_viewpoints, 3, 3)
+    S = np.einsum('ijkl,jlm->ijkm', S, Y)
+
+    # Equivalent to np.array([np.dot(v, v) for v in V])
+    D = (V * V).sum(axis=1)
+    # D.shape == (n_viewpoints, 1, 1)
+    D = D.reshape(D.shape[0], 1, 1)
+
+    # (n_3dpoints, n_viewpoints, 3, 3)
+    return -S / D
+
+
 # @profile
-def jacobian_wrt_exp_coordinates(R, v, b):
+def jacobian_wrt_exp_coordinates_(R, v, b):
     """
     Calculate
     .. math::
@@ -44,32 +124,13 @@ def jacobian_wrt_exp_coordinates(R, v, b):
     \\end{align}
     """
 
-    # See https://arxiv.org/abs/1312.0788
+    # See Eq. (8) in https://arxiv.org/abs/1312.0788
 
-    U = cross_product_matrix(b)
+    B = cross_product_matrix(b)
     V = cross_product_matrix(v)
     I = np.eye(3)
     S = np.outer(v, v) + np.dot(R.T - I, V)
-    return -R.dot(U).dot(S) / np.dot(v, v)
-
-
-# @profile
-def jacobian_pose_and_3dpoint(K, R, v, t, b):
-    """
-    Calculate jacobians w.r.t pose parameters `a = [v, t]` and
-    3D points `b` respectively
-
-    Returns: (JA, JB) where JA = dx / da and JB = dx / db
-    """
-
-    p = np.dot(K, transform3d(R, t, b))
-    JP = jacobian_pi(p)
-    JV = jacobian_wrt_exp_coordinates(R, v, b)
-    JR = JP.dot(JV)
-    JT = JP.dot(K)
-    JA = np.hstack([JR, JT])
-    JB = JT.dot(R)
-    return JA, JB
+    return -R.dot(B).dot(S) / np.dot(v, v)
 
 
 # @profile
@@ -88,21 +149,98 @@ def jacobian_projection(camera_parameters, poses, points3d):
            :math:`\\frac{\\partial X}{\\partial \\b_i}, i=1,\dots,n`
     """
 
-    n_viewpoints = poses.shape[0]
-    n_3dpoints = points3d.shape[0]
+    """
+    JP.shape == (n_3dpoints, n_viewpoints, 2, n_pose_parameters)
+    JS.shape == (n_3dpoints, n_viewpoints, 2, n_point_parameters)
+
+    # derivative w.r.t rotation parameters
+    JR[i, j] = d(Q(points3d[i], poses[j])) / d(poses[j])
+             = JP[i, j] * K * JV[i, j]
+             = JPK[i, j] * JV[i, j]
+
+    # derivative w.r.t translation
+    JT[i, j] = d(Q(points3d[i], poses[j])) / d(poses[j])
+             = JP[i, j] * K
+             = JPK[i, j]
+
+    JA[i, j] = hstack((JR[i, j], JT[i, j]))
+
+    # derivative w.r.t translation
+    JB[i, j] = d(Q(points3d[i], poses[j])) / d(points3d[i])
+             = JP[i, j] * K * R[j]
+             = JPK[i, j] * R[j]
+
+    where
+        JP[i, j] = d(pi(p)) / dp                at p = P[i, j]
+        JV[i, j] = d(R[j] * b[i] + t[j]) / dv   at v = v[j]
+
+        P[i, j] = K * (R[j] * b[i] + t[j])
+        b[i] = 3dpoints[i]
+        R[j] = R(v[j])
+        v[j] = poses[j, :3]
+        t[j] = poses[j, 3:]
+    """
+
     K = camera_parameters.matrix
 
-    P = np.empty((n_3dpoints, n_viewpoints, 2, n_pose_parameters))
-    S = np.empty((n_3dpoints, n_viewpoints, 2, n_point_parameters))
+    n_3dpoints = points3d.shape[0]
+    n_viewpoints = poses.shape[0]
+    def calculate_p():
+        # P.shape == (n_3dpoints, n_viewpoints, 3)
+        P = transform3d(poses, points3d)
+        P = np.einsum('lk,ijk->ijl', K, P)
+        return P
 
-    for j, a in enumerate(poses):
-        v, t = a[:3], a[3:]
-        R = rodrigues(v)
-        for i, b in enumerate(points3d):
-            P[i, j], S[i, j] = jacobian_pose_and_3dpoint(K, R, v, t, b)
+    # JP.shape == (n_3dpoints, n_viewpoints, 3)
+    P = calculate_p()
+
+    # because jacobian_pi accepts array of shape (-, 3)
+    P = P.reshape(-1, 3)
+    # JP.shape == (n_3dpoints * n_viewpoints, 2, 3)
+    JP = jacobian_pi(P)
+    JP = JP.reshape(n_3dpoints, n_viewpoints, 2, 3)  # make the shape back
+
+    # JPK[i, j] = JP[i, j] * K
+    # JPK.shape == (n_3dpoints, n_viewpoints, 2, 3)
+    JPK = np.einsum('ijkl,lm->ijkm', JP, K)
+
+    V = poses[:, :3]
+
+    # JV.sahpe == (n_3dpoints, n_viewpoints, 3, 3)
+    JV = jacobian_wrt_exp_coordinates(V, points3d)
+
+    # JR.shape == (n_3dpoints, n_viewpoints, 2, 3)
+    JR = np.einsum('ijkl,ijlm->ijkm', JPK, JV)
+
+
+    P = np.concatenate((JR, JPK), axis=3)
+
+    # R.shape == (n_viewpoints, 3, 3)
+    R = rodrigues(V)
+    S = np.einsum('ijkl,jlm->ijkm', JPK, R)
 
     JA = camera_pose_jacobian(P)
     JB = structure_jacobian(S)
+
+    return JA, JB
+
+
+def jacobian_pose_and_3dpoint_(K, R, v, t, b):
+    # TODO add derivation of the equation
+    """
+    Calculate jacobians w.r.t pose parameters `a = [v, t]` and
+    3D points `b` respectively
+
+    Returns: (JA, JB) where JA = dx / da and JB = dx / db
+    """
+
+    p = np.dot(K, transform3d(R, t, b))
+    JP = jacobian_pi(p)  # d(pi) / dp at p = K(R * b + t)
+    JV = jacobian_wrt_exp_coordinates(R, v, b)  # d(R(v) * b + t) / dv
+    JT = JP.dot(K)
+    JR = JT.dot(JV)  # JP.dot(K).dot(JV)
+    JA = np.hstack([JR, JT])
+    JB = JT.dot(R)  # JP.dot(K).dot(R)
     return JA, JB
 
 
@@ -165,17 +303,3 @@ def projection(camera_parameters, poses, points3d):
     Z = X[:, :, 2]
     X = X[:, :, 0:2] / Z[:, :, np.newaxis]
     return X
-
-
-def projection_(K: np.ndarray, R: np.ndarray, t: np.ndarray,
-                b: np.ndarray) -> np.ndarray:
-    """
-    Args:
-        K: Camera intrinsic matrix
-        b: 3D point :math:`b = [x, y, z]` to be projected onto the image plane
-
-    Returns:
-        Projected image of :math:`b`
-    """
-
-    return pi(np.dot(K, transform3d(R, t, b)))
