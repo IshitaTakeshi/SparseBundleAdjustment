@@ -14,8 +14,13 @@ from sfm.projection import (projection, jacobian_wrt_exp_coordinates,
 
 
 def test_jacobian_wrt_exp_coordinates():
-    R = rodrigues([np.pi / 2, 0, -np.pi / 2])
+    """
+    calculate d(R(v) * u) / dv
+    """
+
     v = [np.pi / 2, 0, -np.pi / 2]
+    R = rodrigues(v)
+
     u = [0, 2, 1]
     I = np.eye(3)
     A = np.array([

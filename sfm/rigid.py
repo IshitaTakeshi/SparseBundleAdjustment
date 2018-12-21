@@ -56,9 +56,9 @@ def transform3d(poses, points3d):
             Transformed points of shape (n_3dpoints, n_viewpoints, 3)
     """
 
-    V = poses[:, :3]  # V.shape = (n_viewpoints, 3)
-    T = poses[:, 3:]  # T.shape = (n_viewpoints, 3)
-    R = rodrigues(V)  # R.shape = (n_viewpoints, 3, 3)
+    V = poses[:, :3]  # V.shape == (n_viewpoints, 3)
+    T = poses[:, 3:]  # T.shape == (n_viewpoints, 3)
+    R = rodrigues(V)  # R.shape == (n_viewpoints, 3, 3)
 
     # The following computation is equivalent to
     # [[projection_(K, R, t, b) for R_, t in zip(R, T)] for b in points3d]
