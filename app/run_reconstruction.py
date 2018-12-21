@@ -9,6 +9,8 @@ from sfm.lm import LevenbergMarquardt
 from sfm.camera import CameraParameters
 
 from dataset.sba import load_sba
+from visualization.reconstruction import plot_reconstructed
+
 from app.optimizers import optimize_lm, optimize_scipy
 
 
