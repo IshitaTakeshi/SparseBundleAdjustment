@@ -26,8 +26,8 @@ class TestSBA(unittest.TestCase):
         ])
 
         self.poses = np.array([
-            [1, 0, 2, 4, 3, 5],
-            [7, 8, 1, 3, 9, 8]
+            [1, 0, -2, 4, -3, 5],
+            [1, -1, 1, -3, -9, 8]
         ])
 
         self.dpoints3d = np.array([
@@ -37,13 +37,13 @@ class TestSBA(unittest.TestCase):
         ])
 
         self.dposes = np.array([
-            [1e-1, 2e-1, -1e-2, -2e-1, 1e-1, 5e-1],
-            [7e-1, 1e-1, 3e-1, -2e-1, -3e-1, 7e-1]
+            [1e-2, 2e-2, -1e-2, -2e-2, 1e-2, 5e-2],
+            [7e-2, 1e-2, 3e-2, -2e-2, -3e-2, 7e-2]
         ])
 
         self.p = np.array([
-            1, 0, 2, 4, 3, 5,
-            7, 8, 1, 3, 9, 8,
+            1, 0, -2, 4, -3, 5,
+            1, -1, 1, -3, -9, 8,
             9, 0, 2,
             0, 9, 2,
             3, 8, 4
@@ -66,10 +66,13 @@ class TestSBA(unittest.TestCase):
 
         J = self.sba.jacobian(self.p)
 
-        print("J.dot(dp)")
-        print(J.dot(dp))
-        print("x1 - x0")
-        print(x1 - x0)
+        np.set_printoptions(precision=4, linewidth=1e8, suppress=True)
+
+        print("J.dot(dp) / abs(x0)")
+        print(J.dot(dp) / np.abs(x0))
+        print("(x1 - x0) / abs(x0)")
+        print((x1 - x0) / np.abs(x0))
+        print("")
 
     def test_jacobian(self):
         print("Change all")
