@@ -42,11 +42,6 @@ def elementwise_outer(A, B):
     return np.einsum('ij,ik->ijk', A, B)
 
 
-def elementwise_dot(A, B):
-    # Equivalent to np.array([np.dot(a, b) for a, b in zip(A, B)])
-    return np.einsum('ij,ij->i', A, B)
-
-
 def jacobian_wrt_exp_coordinates(V, B):
     """
     Calculate
