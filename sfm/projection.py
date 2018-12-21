@@ -13,34 +13,19 @@ def cross_product_matrix_(v):
     ])
 
 
-# @profile
-# TODO this can be accelerated by calculating jacobians for all points at once
-def jacobian_pi(p):
-    """
-    Jacobian of the projection function defined below w.r.t point \\mathbf{p}
-
-    .. math:
-        pi([x, y, z]) = \\frac{1}{z} \\begin{bmatrix}
-            x \\\\
-            y
-        \\end{bmatrix}
-    """
-
-    x, y, z = p
-    return np.array([
-        [1 / z, 0, -x / pow(z, 2)],
-        [0, 1 / z, -y / pow(z, 2)],
-    ])
-
-
 def jacobian_pi(P):
-    # TODO check if z > 0
+    """
+    Jacobian of the projection function w.r.t 3D point
 
-    # jacobian_pi(P)[i] = [
-    #     [1 / z, 0, -x / pow(z, 2)],
-    #     [0, 1 / z, -y / pow(z, 2)]
-    # ]
-    # where x, y, z = P[i]
+    .. codeblock:
+        jacobian_pi(P)[i] = [
+            [1 / z, 0, -x / pow(z, 2)],
+            [0, 1 / z, -y / pow(z, 2)]
+        ]
+
+    where :code:`x, y, z = P[i]`
+    """
+
 
     z = P[:, 2]
     z_squared = np.power(z, 2)
@@ -135,18 +120,18 @@ def jacobian_wrt_exp_coordinates_(R, v, b):
 
 # @profile
 def jacobian_projection(camera_parameters, poses, points3d):
+    # TODO add derivation of the equation
     """
+    Calculate jacobians w.r.t pose parameters `a = [v, t]` and
+    3D points `b` respectively
+
     Args:
         poses (np.ndarray): Camera poses of shape
             (n_viewpoints, n_pose_parameters)
         points3d (np.ndarray): 3D point coordinates of shape
             (n_3dpoints, n_point_parameters)
 
-    Returns:
-        A: Left side of the Jacobian.
-           :math:`\\frac{\\partial X}{\\partial \\a_j}, j=1,\dots,m`
-        B: Right side of the Jacobian.
-           :math:`\\frac{\\partial X}{\\partial \\b_i}, i=1,\dots,n`
+    Returns: (JA, JB) where JA = dx / da and JB = dx / db
     """
 
     """
@@ -226,13 +211,6 @@ def jacobian_projection(camera_parameters, poses, points3d):
 
 
 def jacobian_pose_and_3dpoint_(K, R, v, t, b):
-    # TODO add derivation of the equation
-    """
-    Calculate jacobians w.r.t pose parameters `a = [v, t]` and
-    3D points `b` respectively
-
-    Returns: (JA, JB) where JA = dx / da and JB = dx / db
-    """
 
     p = np.dot(K, transform3d(R, t, b))
     JP = jacobian_pi(p)  # d(pi) / dp at p = K(R * b + t)
@@ -242,21 +220,6 @@ def jacobian_pose_and_3dpoint_(K, R, v, t, b):
     JA = np.hstack([JR, JT])
     JB = JT.dot(R)  # JP.dot(K).dot(R)
     return JA, JB
-
-
-def rodrigues_(r):
-    # see
-    # https://docs.opencv.org/2.4/modules/calib3d/doc/
-    # camera_calibration_and_3d_reconstruction.html#rodrigues
-
-    theta = np.linalg.norm(r)
-    r = r / theta
-    K = cross_product_matrix_(r)
-    I = np.eye(3, 3)
-
-    # I + sin(theta) * K + (1-cos(theta)) * dot(K, K) is equivalent to
-    # cos(theta) * I + (1-cos(theta)) * outer(r, r) + sin(theta) * K
-    return I + np.sin(theta) * K + (1-np.cos(theta)) * np.dot(K, K)
 
 
 def pi(p):
