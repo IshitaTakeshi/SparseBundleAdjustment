@@ -61,8 +61,8 @@ def transform3d(poses, points3d):
     R = rodrigues(V)  # R.shape == (n_viewpoints, 3, 3)
 
     # The following computation is equivalent to
-    # [[projection_(K, R, t, b) for R_, t in zip(R, T)] for b in points3d]
-    # where projection_(K, R, t, b) = pi(np.dot(K, transform3d(R, t, b)))
+    # [[p(K, R, t, b) for R_, t in zip(R, T)] for b in points3d]
+    # where p(K, R, t, b) = pi(np.dot(K, transform3d(R, t, b)))
 
     # X.shape = (n_3dpoints, n_viewpoints, 3)
     X = np.einsum('ijk,lk->lij', R, points3d)
