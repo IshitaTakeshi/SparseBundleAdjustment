@@ -57,7 +57,8 @@ def load_sba(path):
     """
     ground_truth (np.ndarray): Contains true 3D points
     observations (np.ndarray): 2D observations of shape
-        (n_3dpoints, n_viewpoints, 2). Unobserved points are filled with np.nan
+        (n_3dpoints, n_viewpoints, 2). Unobserved points are filled with
+        :code:`np.nan`
     """
 
     with open(path) as f:
