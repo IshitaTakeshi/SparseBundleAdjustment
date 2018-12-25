@@ -39,7 +39,7 @@ def main():
 
     sba = SBA(camera_parameters, n_3dpoints, n_viewpoints)
 
-    points3d, poses = optimize_scipy(sba, observations.flatten())
+    points3d, poses = optimize_scipy(sba, observations)
     # points3d, poses = optimize_lm(sba, observation)
 
     print("points3d.shape", points3d.shape)
