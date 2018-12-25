@@ -7,28 +7,8 @@ from scipy import sparse
 from sfm.projection import projection, jacobian_projection
 from sfm.config import n_pose_parameters, n_point_parameters
 
-# here we call 3D point coordinates structure parameters
 
-
-def initialize(A, B):
-    # np.sum(X * X, axis=0) is equivalent to np.diag(np.dot(X.T, X))
-    # J = np.hstack([A, B])
-
-    A, B = J()
-    g = np.hstack([
-        np.dot(A.T, epsilon_a),
-        np.dot(B.T, epsilon_b)
-    ])
-
-    a = np.sum(A * A, axis=0).max()
-    b = np.sum(B * B, axis=0).max()
-    mu = tau * np.max([a, b])
-
-    J = sparse.hstack(A, B)
-    epsilon = x - projection_one_point(x)
-    g = J.dot(epsilon)
-
-    return J
+# here we call 3D point coordinates 'structure parameters'
 
 
 def initial_rotations(n_viewpoints):
@@ -154,74 +134,3 @@ class SBA(object):
 
         J = sparse.hstack((A, B))
         return J.tocsr()
-
-
-def inv_v(V):
-    # inv(V) = diag(inv(V_1), ..., inv(V_i), ..., inv(V_n))
-    for i in range(n_3dpoints):
-        s = i * n_point_parameters
-        t = (i+1) * n_point_parameters
-        V[s:t, s:t] = inv(V[s:t, s:t].todense())
-    return V
-
-
-def inv_v(U):
-    # inv(U) = diag(inv(U_1), ..., inv(U_i), ..., inv(U_m))
-    for j in range(n_viewpoints):
-        s = j * n_pose_parameters
-        t = (j+1) * n_pose_parameters
-        U[s:t, s:t] = inv(U[s:t, s:t].todense())
-    return U
-
-
-def calc_update(A, B, C_inv, epsilon, n_3dpoints, n_viewpoints, mu):
-    # eq. 12
-    U = A.T.dot(C_inv).dot(A)
-    W = A.T.dot(C_inv).dot(B)
-    V = B.T.dot(C_inv).dot(B)
-
-    CE = np.dot(C_inv, epsilon)
-    epsilon_a = np.dot(A.T, CE)
-    epsilon_b = np.dot(B.T, CE)
-
-    # add the damping term to the diagonals
-    U = U + mu * np.eye(n_pose_parameters * n_viewpoints)
-    V = V + mu * np.eye(n_point_parameters * n_3dpoints)
-
-    U_inv = inv_u(U)
-    V_inv = inv_v(V)
-
-    Y = W.dot(V_inv)
-
-    S = U_inv - Y.dot(W.T)
-
-    # eq. 21: calculate update of the pose parameters
-    delta_a = np.linalg.solve(S, epsilon_a - np.dot(Y, epsilon_b))
-    # eq. 22: calculate update of the structure parameters
-    delta_b = np.linalg.solve(V, epsilon_b - np.dot(W, delta_a))
-
-    return delta_a, delta_b
-
-
-# FIXME the interface looks redundant
-def inv_covariance(n_3dpoints, n_viewpoints, covariances=None):
-    size = n_3dpoints * n_viewpoints   # number of 2d points
-
-    if covariances is None:
-        return sparse.eye(2 * size)
-
-    def column_indices(i):
-        def block_column_indices(j):
-            s = j * 2
-            t = (j + 1) * 2
-            return np.arange(s, t)
-        return np.concatenate([block_row_indices(j) for j in np.arange(size)])
-
-    def row_indices():
-        return np.repeat(np.arange(size), 2)
-
-    inv_covariances = np.array([inv(c) for c in covariances])
-    data = inv_covariances.flatten()
-    row = row_indices()
-    col = column_indices()
-    return csr_matrix((data, (row, col)))
