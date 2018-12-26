@@ -1,6 +1,11 @@
 import numpy as np
 from scipy.optimize import least_squares
 
+from sfm.lm import LevenbergMarquardt
+from sfm.metrics import SquaredNormResidual
+from sfm.updaters import PCGUpdater
+from sfm.initializers import Initializer
+
 
 def optimize_scipy(sba, observations):
     x = observations.flatten()  # target value
@@ -34,9 +39,13 @@ def optimize_scipy(sba, observations):
 
 
 def optimize_lm(sba, observation):
-    lm = LevenbergMarquardt(sba.projection, sba.jacobian, observation,
-                            n_input_dims=sba.total_parameter_size,
-                            threshold_relative_change=1e-9,
-                            initial_p=sba.initial_p, tau=0.1)
+    function = sba.projection
+    jacobian = sba.jacobian
+    target = observation.flatten()
+
+    residual = SquaredNormResidual(function, target)
+    updater = PCGUpdater(function, jacobian, target, sba.length_all_poses)
+    initializer = Initializer(sba.total_parameter_size)
+    lm = LevenbergMarquardt(updater, residual, initializer)
     p = lm.optimize(max_iter=100)
     return sba.decompose(p)
