@@ -6,9 +6,10 @@ def optimize_scipy(sba, observations):
     x = observations.flatten()  # target value
 
     mask = np.logical_not(np.isnan(x))
+    indices = np.arange(x.shape[0])[mask]
 
     def masked_diff(x1, x2):
-        return x1[mask] - x2[mask]
+        return x1[indices] - x2[indices]
 
     def error(p):
         d = masked_diff(sba.projection(p), x)
@@ -18,10 +19,8 @@ def optimize_scipy(sba, observations):
         d = masked_diff(sba.projection(p), x)
         J = sba.jacobian(p)
 
-        indices = np.arange(len(x))[mask]
         J = J[indices, :]  # d x[mask] / dp
         return 2 * J.T.dot(d)
-
 
     p0 = np.random.normal(size=sba.total_parameter_size)
     result = least_squares(error, p0, error_jacobian, verbose=2)
