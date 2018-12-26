@@ -26,51 +26,12 @@ x = np.zeros(2)  # exact minimum is x = f(p) = [0, 0] at p = [1, 1]
 
 
 class TestLevenbergMarquadt(unittest.TestCase):
-    def setUp(self):
-        self.lm = LevenbergMarquardt(f, J, x, n_input_dims=2, tau=0.1)
-
-    def test_update_positive(self):
-        p, mu, nu = self.lm.update_positive(
-            p=np.zeros(2),
-            delta_p=np.ones(2),
-            mu=3.0,
-            nu=1.0,
-            rho=1.0
-        )
-
-        assert_array_equal(p, np.ones(2))
-        self.assertEqual(mu, 1.0)
-        self.assertEqual(nu, 2.0)
-
-        p, mu, nu = self.lm.update_positive(
-            p=np.zeros(2),
-            delta_p=np.ones(2),
-            mu=3.0,
-            nu=1.0,
-            rho=0.5
-        )
-        self.assertEqual(mu, 3.0)
-
-    def test_update_negative(self):
-        mu, nu = self.lm.update_negative(
-            mu=1.0,
-            nu=2.0
-        )
-
-        self.assertEqual(mu, 2.0)
-        self.assertEqual(nu, 4.0)
-
     def test_optimize(self):
-        lm = LevenbergMarquardt(f, J, x, n_input_dims=2, tau=0.1,
-                                threshold_relative_change=1e-8,
-                                initial_p=np.array([2.0, 2.0]))
+        lm = LevenbergMarquardt(f, J, x, n_input_dims=2, nu=1.2,
+                                p0=np.array([2.0, 2.0]))
         # find p such that f(p) = x
         p = lm.optimize(max_iter=int(1e3))
         assert_array_almost_equal(p, np.array([1.0, 1.0]))
-
-    def test_calculate_rho(self):
-        # TODO
-        pass
 
 
 unittest.main()

@@ -1,37 +1,50 @@
 import numpy as np
-from scipy import sparse
-from scipy.sparse.linalg import spsolve
+from scipy.sparse import linalg, identity, diags
 
 
-def squared_norm(v):
-    return np.sum(np.power(v, 2))
+class ErrorNotReducedException(Exception):
+    pass
 
 
-def squared_mahalanobis_distance(x, y, C):
-    """
-    Calculate mahalanobis distance between :math:`\\mathbf{x}` and
-    :math:`\\mathbf{y}` i.e. :math:`\\mathbf{x}^{\\top}C\\mathbf{y}`
-    """
-    return x.T.dot(C.dot(y))
+class Residual(object):
+    def __init__(self, function, target, weights):
+        self.f = function
+        self.x = target
+        self.W = weights
+
+    def calculate(self, p):
+        d = self.x - self.f(p)
+        if self.W is None:
+            return np.dot(d, d)
+        return np.dot(d, np.dot(self.W, d))
 
 
-def weighted_squared_norm(x, W):
-    return squared_mahalanobis_distance(x, x, W)
+class Updater(object):
+    def __init__(self, function, jacobian, target, p):
+        self.f = function
+        self.p = p
+
+        J = jacobian(p)
+
+        mask = np.logical_not(np.isnan(target))
+        indices = np.arange(J.shape[0])[mask]
+
+        x = target[indices]
+        f = self.f(p)[indices]
+        J = J[indices, :]  # d x[mask] / dp
+
+        self.A = J.T.dot(J)
+        self.D = diags(self.A.diagonal())
+        self.g = J.T.dot(x - f)
+
+    def calculate(self, lambda_):
+        dp = linalg.spsolve(self.A + lambda_ * self.D, self.g)
+        return self.p + dp
 
 
 class LevenbergMarquardt(object):
-    """
-    Find :math:`\\mathbf{p}` which satisfies
-    :math:`\\mathbf{f}(\\mathbf{p}) = \\mathbf{x}`
-    """
-    """Fig. 2"""
-
-    # TODO set the hyperparameter
-    def __init__(self, function, jacobian, target, n_input_dims=None,
-                 initial_p=None, weights=None,
-                 tau=0.01, threshold_singular=0.01,
-                 threshold_relative_change=1e-4,
-                 threshold_sba=0.01):
+    def __init__(self, function, jacobian, target, weights=None, n_input_dims=None,
+                 p0=None, lambda0=1e-3, nu=1.01):
         """
         Args:
             n_input_dims (int): Number of dimensions of :math:`\\mathbf{p}`
@@ -40,113 +53,69 @@ class LevenbergMarquardt(object):
         self.f = function
         self.J = jacobian
         self.x = target
-        self.I = sparse.eye(n_input_dims)
-        self.tau = tau
 
-        # TODO rename the variables below. they are actually not thresholds
-        self.threshold_singular = threshold_singular
-        self.threshold_relative_change = threshold_relative_change
-        self.threshold_sba = threshold_sba  # TODO remove this if possible
+        self.residual = Residual(function, target, weights)
+        self.lambda0 = lambda0
 
-        if initial_p is None:
-            self.initial_p = self.initialize_p(n_input_dims)
+        if p0 is None:
+            self.p0 = np.random.normal(size=n_input_dims)
         else:
-            self.initial_p = initial_p
+            self.p0 = p0
 
-        if weights is None:
-            self.W = sparse.eye(len(self.x))
-        else:
-            self.W = weights
+        if nu <= 1.0:
+            raise ValueError("nu must be >= 1")
 
-    def initialize_p(self, n_input_dims):
-        return np.random.normal(size=n_input_dims)
+        self.nu = nu
+        print("Initialized")
 
-    def condition_almost_singular(self, delta_p, p):
-        t = self.threshold_singular
-        a = squared_norm(delta_p)
-        b = (squared_norm(p) + t) / self.threshold_sba
-        return a >= b
+    def evaluate(self, updater, r0, lambda_):
+        p1 = updater.calculate(lambda_)
+        r1 = self.residual.calculate(p1)
+        return r1 < r0, r1, p1, lambda_
 
-    def condition_relative_change(self, delta_p, p):
-        """
-        ||\\delta_{\\mathbf{p}}||^2 \leq \\epsilon^2 ||\\mathbf{p}||^2
-        """
-        t = self.threshold_relative_change
-        a = squared_norm(delta_p)
-        b = pow(t, 2) * squared_norm(p)
-        return a <= b
+    def update(self, r0, p0, lambda0, n_attempts=10):
+        # See the link below:
+        # https://en.wikipedia.org/wiki/Levenberg%E2%80%93Marquardt_algorithm#
+        # Choice_of_damping_parameter
 
-    def calculate_rho(self, p, g, delta_p, epsilon_p, mu):
-        # mahalanobis distance from the current estimation to the target
-        current = weighted_squared_norm(epsilon_p, self.W)
-        # and the distance from the next candidate estimation to the target
-        next_ = weighted_squared_norm(self.x - self.f(p + delta_p), self.W)
+        updater = Updater(self.f, self.J, self.x, p0)
+        nu = self.nu
 
-        # dl = mu * ||delta_p||^2 + dot(delta_p, g)
-        #    = mu * ||delta_p||^2 + dot(delta_p, dot(A + mu * I, delta_p))
-        #    = mu * ||delta_p||^2 + mahalanobis(delta_p, delta_p, A + mu * I)^2
-        # Since A = dot(J.T, J) is symmetric, A is a positive definite matrix.
-        # Therefore dl > 0
+        reduced, r1, p1, lambda1 = self.evaluate(updater, r0, lambda0 / nu)
+        if reduced:
+            return r1, p1, lambda1
+        print("Cost not reduced at lambda0 / nu")
 
-        dl = delta_p.dot(mu * delta_p + g)
+        reduced, r1, p1, lambda1 = self.evaluate(updater, r0, lambda0)
+        if reduced:
+            return r1, p1, lambda1
 
-        if dl == 0:  # avoid ZeroDivisionError
-            return 0
-        return (current-next_) / dl
+        print("Cost not reduced at lambda0")
 
-    def update(self, p, delta_p, mu, nu, rho):
-        if rho > 0:
-            p, mu, nu = self.update_positive(p, delta_p, mu, nu, rho)
-        else:
-            mu, nu = self.update_negative(mu, nu)
-        return p, mu, nu
+        # update lambda0 until error reduces
+        for k in range(1, n_attempts+1):
+            reduced, r1, p1, lambda0 = self.evaluate(updater, r0, lambda0 * nu)
+            if reduced:
+                return r1, p1, lambda0
 
-    def update_positive(self, p, delta_p, mu, nu, rho):
-        p = p + delta_p
-        mu = mu * max(1/3, 1 - pow(2*rho - 1, 3))
-        nu = 2.0
-        return p, mu, nu
+        raise ErrorNotReducedException
 
-    def update_negative(self, mu, nu):
-        mu = mu * nu
-        nu = 2 * nu
-        return mu, nu
-
-    def initialize(self):
-        p = self.initial_p
-        J = self.J(p)
-        epsilon = self.x - self.f(p)
-        g = J.T.dot(epsilon)
-
-        v = J.multiply(J).sum(axis=0)  # equivalent to diag(dot(J.T, J))
-
-        mu = self.tau * v.max()
-        nu = 2
-        return p, J, g, mu, nu
-
-    def calculate_update(self, J, g, mu):
-        A = J.T.dot(J)
-        delta_p = spsolve(A + mu * self.I, g)
-        return delta_p
+    def print_status(self, r0, r1, lambda_):
+        print(" {:8.5e}  {:8.5e}  {:8.5e}".format(r0, r1-r0, lambda_))
 
     def optimize(self, max_iter=200):
-        p, J, g, mu, nu = self.initialize()
+        print("Error     Error reduction   lambda")
 
-        for k in range(max_iter):
-            epsilon_p = self.x - self.f(p)
+        p, lambda_ = self.p0, self.lambda0
 
-            delta_p = self.calculate_update(J, g, mu)
+        r0 = self.residual.calculate(p)
 
-            if self.condition_relative_change(delta_p, p):
-                print("Condition relative change")
+        for i in range(max_iter):
+            try:
+                r1, p, lambda_ = self.update(r0, p, lambda_)
+            except ErrorNotReducedException:
                 return p
 
-            # if self.condition_almost_singular(delta_p, p):
-            #     raise RuntimeError("#TODO add comment")
-
-            rho = self.calculate_rho(p, g, delta_p, epsilon_p, mu)
-            p, mu, nu = self.update(p, delta_p, mu, nu, rho)
-
-            J = self.J(p)
-            g = J.T.dot(epsilon_p)
+            self.print_status(r0, r1, lambda_)
+            r0 = r1
         return p
