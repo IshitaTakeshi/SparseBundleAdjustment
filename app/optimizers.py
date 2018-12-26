@@ -46,6 +46,7 @@ def optimize_lm(sba, observation):
     residual = SquaredNormResidual(function, target)
     updater = PCGUpdater(function, jacobian, target, sba.length_all_poses)
     initializer = Initializer(sba.total_parameter_size)
-    lm = LevenbergMarquardt(updater, residual, initializer)
+    lm = LevenbergMarquardt(updater, residual, initializer,
+                            initial_lambda=1e-6, nu=1.2)
     p = lm.optimize(max_iter=100)
     return sba.decompose(p)
