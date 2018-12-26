@@ -7,7 +7,8 @@ class ErrorNotReducedException(Exception):
 
 class LevenbergMarquardt(object):
     def __init__(self, updater, residual, initializer,
-                 initial_lambda=1e-3, nu=1.4):
+                 initial_lambda=1e-3, nu=1.01, tolerance=1e-4):
+
         """
         Args:
             n_input_dims (int): Number of dimensions of :math:`\\mathbf{p}`
@@ -18,6 +19,11 @@ class LevenbergMarquardt(object):
         self.initializer = initializer
 
         self.initial_lambda = initial_lambda
+
+        if tolerance <= 0:
+            raise ValueError("tolerance must be > 0")
+
+        self.tolerance = tolerance
 
         if nu <= 1.0:
             raise ValueError("nu must be >= 1")
@@ -81,6 +87,9 @@ class LevenbergMarquardt(object):
                 r1, p, lambda_ = self.update(r0, p, lambda_)
             except ErrorNotReducedException:
                 # p is the local minima
+                return p
+
+            if r1 < self.tolerance:
                 return p
 
             self.print_status(r0, r1, lambda_)
