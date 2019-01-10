@@ -19,7 +19,7 @@ Tomasi-Kanade法と比較すると，次のような特徴がある．
 欠点
 
 - 問題に応じてハイパーパラメータを調整しなければならない
-- 誤差関数のヤコビ行列を計算する際に， :math:`\mathbb{so}(3)` や四元数などに関する微分が現れるため，手法が複雑である
+- 誤差関数のヤコビ行列を計算する際に， :math:`\mathfrak{so}(3)` や四元数などに関する微分が現れるため，手法が複雑である
 
 
 問題設定
@@ -31,7 +31,8 @@ Tomasi-Kanade法と比較すると，次のような特徴がある．
 
 - 3次元空間におけるランドマーク座標 :math:`\mathbf{b}_{j},j=1,\dots,n`
 - カメラ姿勢 :math:`\mathbf{a}_{i} = [\mathbf{t}_{i}, \mathbf{\omega}_{i}],i=1,\dots,m`
-  ただし :math:`\mathbf{t}` は並進，:math:`\mathbf{\omega}` は :math:`\mathbb{so}(3)` の元である．
+  ただし :math:`\mathbf{t} \in \mathbb{R}^{3}` は並進を表すベクトルであり，:math:`\mathbf{\omega} \in \mathfrak{so}(3)` はカメラの回転を表す回転行列 :math:`R \in \mathbb{R}^{3 \times 3}` に対応するリー代数の元である．
+
 
 入力
 ~~~~
