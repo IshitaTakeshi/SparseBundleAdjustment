@@ -2,7 +2,6 @@
 Sparse Bundle Adjustment
 ========================
 
-----
 概要
 ----
 
@@ -22,19 +21,21 @@ Tomasi-Kanade法と比較すると，次のような特徴がある．
 - 問題に応じてハイパーパラメータを調整しなければならない
 - 誤差関数のヤコビ行列を計算する際に， :math:`\mathbb{so}(3)` や四元数などに関する微分が現れるため，手法が複雑である
 
---------
+
 問題設定
 --------
 
 得たいもの
-----------
+~~~~~~~~~~
+
 
 - 3次元空間におけるランドマーク座標 :math:`\mathbf{b}_{j},j=1,\dots,n`
 - カメラ姿勢 :math:`\mathbf{a}_{i} = [\mathbf{t}_{i}, \mathbf{\omega}_{i}],i=1,\dots,m`
   ただし :math:`\mathbf{t}` は並進，:math:`\mathbf{\omega}` は :math:`\mathbb{so}(3)` の元である．
 
 入力
-----
+~~~~
+
 
 各視点から観測されたランドマークの像の集合 :math:`\mathbf{X}`
 
@@ -53,7 +54,6 @@ Tomasi-Kanade法と比較すると，次のような特徴がある．
     \end{bmatrix}
 
 
-----
 目的
 ----
 
@@ -99,7 +99,7 @@ Tomasi-Kanade法と比較すると，次のような特徴がある．
 .. math::
     E(\mathbf{P}) = (\mathbf{X}-\hat{\mathbf{X}})^{\top} \Sigma_{\mathbf{X}} (\mathbf{X}-\hat{\mathbf{X}})
 
-----------
+
 解法の概要
 ----------
 
@@ -126,7 +126,7 @@ SBAは，このヤコビ行列 :math:`\mathbf{J}` がスパースであること
 
 
 ヤコビ行列のスパース性
-----------------------
+~~~~~~~~~~~~~~~~~~~~~~
 
 :math:`\forall j \neq k` について
 
@@ -141,8 +141,10 @@ SBAは，このヤコビ行列 :math:`\mathbf{J}` がスパースであること
 が成り立つことから，ヤコビ行列 :math:`\mathbf{J}` はスパースな行列になる．
 この性質を利用すると，:eq:`lm_update` のうち必要な部分のみを計算することで効率よく :math:`\delta_{\mathbf{P}}` を求めることが可能となる．
 
-線型方程式の変形
-----------------
+
+例
+~~
+
 
 :math:`A_{ij}=\frac{\partial \mathbf{Q}(\mathbf{a}_{j}, \mathbf{a}_{j})}{\partial \mathbf{a}_{j}}` ，
 :math:`B_{ij}=\frac{\partial \mathbf{Q}(\mathbf{a}_{j}, \mathbf{b}_{i})}{\partial \mathbf{b}_{i}}`
@@ -166,36 +168,8 @@ SBAは，このヤコビ行列 :math:`\mathbf{J}` がスパースであること
 
 となる．
 
-Appendix
---------
 
-LM法の導出
-----------
-
-:math:`\Sigma` を分散共分散行列とし，誤差をmahalanobis距離によって次のように定義する．
-
-.. math::
-    d_{\Sigma}(\mathbf{y}, \mathbf{f}(\mathbf{\beta} + \mathbf{\delta})) = (\mathbf{y} - \mathbf{f}(\mathbf{\beta} + \mathbf{\delta}))^{\top}\Sigma (\mathbf{y} - \mathbf{f}(\mathbf{\beta} + \mathbf{\delta}))
-    :label: lm_error
-
-
-関数 :math:`\mathbf{f}` を :math:`\mathbf{f}(\mathbf{\beta} + \mathbf{\delta}) \approx \mathbf{f}(\mathbf{\beta}) + J \mathbf{\delta},J=\frac{\partial \mathbf{f}}{\partial \beta}` と近似すると， :eq:`lm_error` は
-
-.. math::
-    \begin{align}
-    d_{\Sigma}(\mathbf{y}, \mathbf{f}(\mathbf{\beta} + \mathbf{\delta}))
-    &\approx (\mathbf{y} - \mathbf{f}(\mathbf{\beta}) - \mathbf{J}\mathbf{\delta})^{\top} \Sigma (\mathbf{y} - \mathbf{f}(\mathbf{\beta}) - \mathbf{J}\mathbf{\delta}) \\
-    &= (\mathbf{y} - \mathbf{f}(\mathbf{\beta}))^{\top} \Sigma  (\mathbf{y} - \mathbf{f}(\mathbf{\beta}))
-    - 2 (\mathbf{y} - \mathbf{f}(\mathbf{\beta}))^{\top} \Sigma^{-1} \mathbf{J} \mathbf{\delta}
-    + \mathbf{\delta}^{\top} \mathbf{J}^{\top} \Sigma^{-1} \mathbf{J} \mathbf{\delta}
-    \end{align}
-
-となる．
-
-
-:eq:`lm_error` を
-
-.. math::
-    E(p) = (\mathbf{X}-\hat{\mathbf{X}})^{\top} \Sigma_{\mathbf{X}} (\mathbf{X}-\hat{\mathbf{X}})
+勾配の具体的な計算方法
+----------------------
 
 
