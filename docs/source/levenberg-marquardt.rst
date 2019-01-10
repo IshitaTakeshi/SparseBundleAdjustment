@@ -8,10 +8,10 @@ LM法
 
 LM法は，Gauss-Newton法と最急降下法の性質を組み合わせた非線形最小二乗法の一種である．
 
-:math:`\mathbf{\beta}` をパラメータとするあるベクトル値関数 :math:`\mathbf{f}(\mathbf{\beta})` と目標値ベクトル :math:`\mathbf{y}` について，次で定義される誤差 :math:`d_{\Sigma}(\mathbf{y}, \mathbf{f}(\mathbf{\beta}))` を最小化するような :math:`\mathbf{\beta}` を見つける問題を考える．
+:math:`\mathbf{\beta}` をパラメータとするあるベクトル値関数 :math:`\mathbf{f}(\mathbf{\beta})` と目標値ベクトル :math:`\mathbf{y}` について，次で定義される誤差 :math:`d^{2}_{\Sigma}(\mathbf{y}, \mathbf{f}(\mathbf{\beta}))` を最小化するような :math:`\mathbf{\beta}` を見つける問題を考える．
 
 .. math::
-    d_{\Sigma}(\mathbf{y}, \mathbf{f}(\mathbf{\beta})) = (\mathbf{y} - \mathbf{f}(\mathbf{\beta}))^{\top}\Sigma^{-1} (\mathbf{y} - \mathbf{f}(\mathbf{\beta}))
+    d^{2}_{\Sigma}(\mathbf{y}, \mathbf{f}(\mathbf{\beta})) = (\mathbf{y} - \mathbf{f}(\mathbf{\beta}))^{\top}\Sigma^{-1} (\mathbf{y} - \mathbf{f}(\mathbf{\beta}))
     :label: error
 
 LM法はGauss-Newton法と最急降下法を組み合わせた手法だと解釈することがすることができる．
@@ -44,7 +44,7 @@ LM法はGauss-Newton法と最急降下法を組み合わせた手法だと解釈
 :math:`\Sigma` を分散共分散行列とし，誤差をmahalanobis距離によって次のように定義する．
 
 .. math::
-    d_{\Sigma}(\mathbf{y}, \mathbf{f}(\mathbf{\beta} + \mathbf{\delta})) = (\mathbf{y} - \mathbf{f}(\mathbf{\beta} + \mathbf{\delta}))^{\top}\Sigma^{-1} (\mathbf{y} - \mathbf{f}(\mathbf{\beta} + \mathbf{\delta}))
+    d^{2}_{\Sigma}(\mathbf{y}, \mathbf{f}(\mathbf{\beta} + \mathbf{\delta})) = (\mathbf{y} - \mathbf{f}(\mathbf{\beta} + \mathbf{\delta}))^{\top}\Sigma^{-1} (\mathbf{y} - \mathbf{f}(\mathbf{\beta} + \mathbf{\delta}))
     :label: updated_error
 
 
@@ -52,7 +52,7 @@ LM法はGauss-Newton法と最急降下法を組み合わせた手法だと解釈
 
 .. math::
     \begin{align}
-    d_{\Sigma}(\mathbf{y}, \mathbf{f}(\mathbf{\beta} + \mathbf{\delta}))
+    d^{2}_{\Sigma}(\mathbf{y}, \mathbf{f}(\mathbf{\beta} + \mathbf{\delta}))
     &\approx (\mathbf{y} - \mathbf{f}(\mathbf{\beta}) - \mathbf{J}\mathbf{\delta})^{\top} \Sigma^{-1} (\mathbf{y} - \mathbf{f}(\mathbf{\beta}) - \mathbf{J}\mathbf{\delta}) \\
     &= (\mathbf{y} - \mathbf{f}(\mathbf{\beta}))^{\top} \Sigma^{-1}  (\mathbf{y} - \mathbf{f}(\mathbf{\beta}))
     - 2 (\mathbf{y} - \mathbf{f}(\mathbf{\beta}))^{\top} \Sigma^{-1} \mathbf{J} \mathbf{\delta}
