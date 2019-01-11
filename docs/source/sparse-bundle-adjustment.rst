@@ -152,19 +152,19 @@ SBAは，このヤコビ行列 :math:`\mathrm{J}` がスパースであること
 とおくと，:math:`n=4` ，:math:`m=3` のとき， :math:`\mathrm{J}` は
 
 .. math::
-    \mathbf{J} = \begin{bmatrix}
-        \mathbf{A}_{11} & \mathbf{0} & \mathbf{0} & \mathbf{B}_{11} & \mathbf{0} & \mathbf{0} & \mathbf{0} \\
-        \mathbf{0} & \mathbf{A}_{11} & \mathbf{0} & \mathbf{B}_{12} & \mathbf{0} & \mathbf{0} & \mathbf{0} \\
-        \mathbf{0} & \mathbf{0} & \mathbf{A}_{11} & \mathbf{B}_{13} & \mathbf{0} & \mathbf{0} & \mathbf{0} \\
-        \mathbf{A}_{21} & \mathbf{0} & \mathbf{0} & \mathbf{0} & \mathbf{B}_{21} & \mathbf{0} & \mathbf{0} \\
-        \mathbf{0} & \mathbf{A}_{21} & \mathbf{0} & \mathbf{0} & \mathbf{B}_{22} & \mathbf{0} & \mathbf{0} \\
-        \mathbf{0} & \mathbf{0} & \mathbf{A}_{21} & \mathbf{0} & \mathbf{B}_{23} & \mathbf{0} & \mathbf{0} \\
-        \mathbf{A}_{31} & \mathbf{0} & \mathbf{0} & \mathbf{0} & \mathbf{0} & \mathbf{B}_{31} & \mathbf{0} \\
-        \mathbf{0} & \mathbf{A}_{31} & \mathbf{0} & \mathbf{0} & \mathbf{0} & \mathbf{B}_{32} & \mathbf{0} \\
-        \mathbf{0} & \mathbf{0} & \mathbf{A}_{31} & \mathbf{0} & \mathbf{0} & \mathbf{B}_{33} & \mathbf{0} \\
-        \mathbf{A}_{41} & \mathbf{0} & \mathbf{0} & \mathbf{0} & \mathbf{0} & \mathbf{0} & \mathbf{B}_{41} \\
-        \mathbf{0} & \mathbf{A}_{41} & \mathbf{0} & \mathbf{0} & \mathbf{0} & \mathbf{0} & \mathbf{B}_{42} \\
-        \mathbf{0} & \mathbf{0} & \mathbf{A}_{41} & \mathbf{0} & \mathbf{0} & \mathbf{0} & \mathbf{B}_{43} \\
+    \mathrm{J} = \begin{bmatrix}
+        \mathrm{A}_{11} & \mathbf{0} & \mathbf{0} & \mathrm{B}_{11} & \mathbf{0} & \mathbf{0} & \mathbf{0} \\
+        \mathbf{0} & \mathrm{A}_{11} & \mathbf{0} & \mathrm{B}_{12} & \mathbf{0} & \mathbf{0} & \mathbf{0} \\
+        \mathbf{0} & \mathbf{0} & \mathrm{A}_{11} & \mathrm{B}_{13} & \mathbf{0} & \mathbf{0} & \mathbf{0} \\
+        \mathrm{A}_{21} & \mathbf{0} & \mathbf{0} & \mathbf{0} & \mathrm{B}_{21} & \mathbf{0} & \mathbf{0} \\
+        \mathbf{0} & \mathrm{A}_{21} & \mathbf{0} & \mathbf{0} & \mathrm{B}_{22} & \mathbf{0} & \mathbf{0} \\
+        \mathbf{0} & \mathbf{0} & \mathrm{A}_{21} & \mathbf{0} & \mathrm{B}_{23} & \mathbf{0} & \mathbf{0} \\
+        \mathrm{A}_{31} & \mathbf{0} & \mathbf{0} & \mathbf{0} & \mathbf{0} & \mathrm{B}_{31} & \mathbf{0} \\
+        \mathbf{0} & \mathrm{A}_{31} & \mathbf{0} & \mathbf{0} & \mathbf{0} & \mathrm{B}_{32} & \mathbf{0} \\
+        \mathbf{0} & \mathbf{0} & \mathrm{A}_{31} & \mathbf{0} & \mathbf{0} & \mathrm{B}_{33} & \mathbf{0} \\
+        \mathrm{A}_{41} & \mathbf{0} & \mathbf{0} & \mathbf{0} & \mathbf{0} & \mathbf{0} & \mathrm{B}_{41} \\
+        \mathbf{0} & \mathrm{A}_{41} & \mathbf{0} & \mathbf{0} & \mathbf{0} & \mathbf{0} & \mathrm{B}_{42} \\
+        \mathbf{0} & \mathbf{0} & \mathrm{A}_{41} & \mathbf{0} & \mathbf{0} & \mathbf{0} & \mathrm{B}_{43} \\
     \end{bmatrix}
 
 となる．
