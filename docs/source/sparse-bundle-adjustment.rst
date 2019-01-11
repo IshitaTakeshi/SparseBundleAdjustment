@@ -173,4 +173,87 @@ SBAは，このヤコビ行列 :math:`\mathrm{J}` がスパースであること
 勾配の具体的な計算方法
 ----------------------
 
+SBAでは再投影誤差を勾配ベースの最適化手法で最小化することで姿勢パラメータ :math:`\mathbf{a}` と3次元点の座標 :math:`\mathbf{b}` を求めているため，画像平面に投影された像 :math:`\hat{\mathbf{x}}` の :math:`\mathbf{a}` と :math:`\mathbf{b}` それぞれについての微分を計算する必要がある．
 
+
+姿勢パラメータに関する微分
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+姿勢パラメータ :math:`\mathbf{a} = \left[ \mathbf{t}, \mathbf{\omega} \right]` に関する微分 :math:`\mathrm{A}=\frac{\partial \hat{\mathbf{x}}}{\partial \mathbf{a}} =\begin{bmatrix} \frac{\partial \hat{\mathbf{x}}}{\partial \mathbf{t}} & \frac{\partial \hat{\mathbf{x}}}{\partial \mathbf{\omega}} \end{bmatrix}` は次のようになる．
+
+
+.. math::
+    \begin{align}
+    \frac{\partial \hat{\mathbf{x}}}{\partial \mathbf{t}}
+    &= \frac{\partial \pi(\mathbf{p})}{\partial \mathbf{p}}
+       \bigg\rvert_{\mathbf{p}=\mathrm{K}(\mathrm{R}\mathbf{b} + \mathbf{t})}
+       \cdot
+       \mathrm{K}
+       \cdot
+       \frac{\partial (\mathrm{R}(\mathbf{\omega})\mathbf{b} + \mathbf{v})}{\partial \mathbf{v}}
+       \bigg\rvert_{\mathbf{v}=\mathbf{t}} \\
+    &= \frac{\partial \pi(\mathbf{p})}{\partial \mathbf{p}}
+       \bigg\rvert_{\mathbf{p}=\mathrm{K}(\mathrm{R}\mathbf{b} + \mathbf{t})}
+       \cdot
+       \mathrm{K}
+    \end{align}
+
+
+.. math::
+    \begin{align}
+    \frac{\partial \hat{\mathbf{x}}}{\partial \mathbf{\omega}}
+    &= \frac{\partial \pi(\mathbf{p})}{\partial \mathbf{p}}
+       \bigg\rvert_{\mathbf{p}=\mathrm{K}(\mathrm{R}\mathbf{b} + \mathbf{t})}
+       \cdot
+       \mathrm{K}
+       \cdot
+       \frac{\partial (\mathrm{R}(\mathbf{v})\mathbf{b} + \mathbf{t})}{\partial \mathbf{v}}
+       \bigg\rvert_{\mathbf{v}=\mathbf{\omega}} \\
+    &= \frac{\partial \pi(\mathbf{p})}{\partial \mathbf{p}}
+       \bigg\rvert_{\mathbf{p}=\mathrm{K}(\mathrm{R}\mathbf{b} + \mathbf{t})}
+       \cdot
+       \mathrm{K}
+       \cdot
+       \frac{\partial (\mathrm{R}(\mathbf{v})\mathbf{b})}{\partial \mathbf{v}}
+       \bigg\rvert_{\mathbf{v}=\mathbf{\omega}}
+    \end{align}
+
+
+ここで， :math:`\frac{\partial (\mathrm{R}(\mathbf{v})\mathbf{b})}{\partial \mathbf{v}}` は [#Gallego_et_al_2015]_ による計算結果を用いることができる
+
+.. math::
+   \frac{\partial (\mathrm{R}(\mathbf{v})\mathbf{b})}{\partial \mathbf{v}}
+   = -\mathrm{R}(\mathbf{v}) \left[ \mathbf{b} \right]_{\times}
+     \frac{
+        \mathbf{v}\mathbf{v}^{\top} +
+        (\mathrm{R}(\mathbf{v})^{\top} - \mathrm{I}) \left[ \mathbf{v} \right]_{\times}
+     }{||\mathbf{v}||^{2}}
+
+
+3次元点座標に関する微分
+~~~~~~~~~~~~~~~~~~~~~~~
+
+3次元点の座標 :math:`\mathbf{b}` に関する微分 :math:`\mathrm{B}=\frac{\partial \hat{\mathbf{x}}}{\partial \mathbf{b}}` は次のようになる．
+
+.. math::
+    \begin{align}
+    \frac{\partial \hat{\mathbf{x}}}{\partial \mathbf{b}}
+    &= \frac{\partial \pi(\mathbf{p})}{\partial \mathbf{p}}
+       \bigg\rvert_{\mathbf{p}=\mathrm{K}(\mathrm{R}\mathbf{b} + \mathbf{t})}
+       \cdot
+       \mathrm{K}
+       \cdot
+       \frac{\partial (\mathrm{R}(\mathbf{\omega})\mathbf{v} + \mathbf{t})}{\partial \mathbf{v}}
+       \bigg\rvert_{\mathbf{v}=\mathbf{b}} \\
+    &= \frac{\partial \pi(\mathbf{p})}{\partial \mathbf{p}}
+       \bigg\rvert_{\mathbf{p}=\mathrm{K}(\mathrm{R}\mathbf{b} + \mathbf{t})}
+       \cdot
+       \mathrm{K}
+       \cdot
+       \mathrm{R}(\mathbf{\omega})
+    \end{align}
+
+
+
+.. [#Gallego_et_al_2015] Gallego, Guillermo, and Anthony Yezzi. "A compact formula for the derivative of a 3-D rotation in exponential coordinates." Journal of Mathematical Imaging and Vision 51.3 (2015): 378-384.
