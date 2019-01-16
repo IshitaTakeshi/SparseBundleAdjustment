@@ -58,19 +58,19 @@ Tomasi-Kanade法と比較すると，次のような特徴がある．
 目的
 ----
 
-投影モデルを :math:`\mathrm{Q}(\mathbf{a}_{i},\mathbf{b}_{j})` とし，以下の誤差関数を最小化するような :math:`\mathrm{P} = \left[ \mathbf{a}^{\top}_{1}, \dots, \mathbf{a}^{\top}_{m}, \mathbf{b}^{\top}_{1}, \dots, \mathbf{b}^{\top}_{n} \right]` を求める．
+投影モデルを :math:`\mathrm{Q}(\mathbf{a}_{i},\mathbf{b}_{j})` とし，以下の誤差関数を最小化するような :math:`\mathrm{P} = \left[\mathbf{a}, \mathbf{b}\right] = \left[ \mathbf{a}^{\top}_{1}, \dots, \mathbf{a}^{\top}_{m}, \mathbf{b}^{\top}_{1}, \dots, \mathbf{b}^{\top}_{n} \right]` を求める．
 
 .. math::
     E(\mathrm{P}) = \begin{align}
-    \sum_{i=1}^{n} \sum_{j=1}^{m} d_{\Sigma_{\mathbf{x}_{ij}}}(\mathrm{Q}(\mathbf{a}_{j}, \mathbf{b}_{i}), \mathbf{x}_{ij})^{2}
+    \sum_{i=1}^{n} \sum_{j=1}^{m} d_{\mathrm{\Sigma}_{\mathbf{x}_{ij}}}(\mathrm{Q}(\mathbf{a}_{j}, \mathbf{b}_{i}), \mathbf{x}_{ij})^{2}
     \end{align}
 
 
-ここで :math:`d_{\Sigma_{\mathbf{x}}}` は
+ここで :math:`d_{\mathrm{\Sigma}_{\mathbf{x}}}` は :math:`\mathbf{x}` に対応する分散共分散行列を :math:`\mathrm{\Sigma}_{\mathbf{x}}` として
 
 .. math::
-    d_{\Sigma_{\mathbf{x}}}(\mathbf{x}_{1}, \mathbf{x}_{2}) =
-    \sqrt{(\mathbf{x}_{1} - \mathbf{x}_{2})^{\top} \Sigma^{-1}_{\mathbf{x}} (\mathbf{x}_{1} - \mathbf{x}_{2})}
+    d_{\mathrm{\Sigma}_{\mathbf{x}}}(\mathbf{x}_{1}, \mathbf{x}_{2}) =
+    \sqrt{(\mathbf{x}_{1} - \mathbf{x}_{2})^{\top} \mathrm{\Sigma}^{-1}_{\mathbf{x}} (\mathbf{x}_{1} - \mathbf{x}_{2})}
 
 で定義される距離関数である．
 
@@ -87,18 +87,28 @@ Tomasi-Kanade法と比較すると，次のような特徴がある．
         \hat{\mathbf{x}}^{\top}_{n1},
         \dots,
         \hat{\mathbf{x}}^{\top}_{nm}
-    \end{bmatrix} \\
-    \hat{\mathbf{x}}_{ij} &= \mathrm{Q}(\mathbf{a}_{j}, \mathbf{b}_{i}) \\
-    \Sigma_{\mathrm{X}} &= diag(\Sigma_{\mathbf{x}_{11}}, \dots, \Sigma_{\mathbf{x}_{1m}},
-                                \Sigma_{\mathbf{x}_{21}}, \dots, \Sigma_{\mathbf{x}_{2m}},
-                                \dots,
-                                \Sigma_{\mathbf{x}_{n1}}, \dots, \Sigma_{\mathbf{x}_{nm}})
+    \end{bmatrix}^{\top} \\
+    \hat{\mathbf{x}}_{ij}
+    &= \mathrm{Q}(\mathbf{a}_{j}, \mathbf{b}_{i}) \\
+    \mathrm{\Sigma}_{\mathrm{X}}
+    &= diag(
+        \mathrm{\Sigma}_{\mathbf{x}_{11}},
+        \dots,
+        \mathrm{\Sigma}_{\mathbf{x}_{1m}},
+        \mathrm{\Sigma}_{\mathbf{x}_{21}},
+        \dots,
+        \mathrm{\Sigma}_{\mathbf{x}_{2m}},
+        \dots,
+        \mathrm{\Sigma}_{\mathbf{x}_{n1}},
+        \dots,
+        \mathrm{\Sigma}_{\mathbf{x}_{nm}}
+    )
     \end{align}
 
 とおけば，誤差を次のように表現することができる．
 
 .. math::
-    E(\mathrm{P}) = (\mathrm{X}-\hat{\mathrm{X}})^{\top} \Sigma_{\mathrm{X}} (\mathrm{X}-\hat{\mathrm{X}})
+    E(\mathrm{P}) = (\mathrm{X}-\hat{\mathrm{X}})^{\top} \mathrm{\Sigma}_{\mathrm{X}} (\mathrm{X}-\hat{\mathrm{X}})
 
 
 解法の概要
