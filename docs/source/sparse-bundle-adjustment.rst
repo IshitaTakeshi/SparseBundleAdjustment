@@ -114,7 +114,8 @@ Tomasi-Kanade法と比較すると，次のような特徴がある．
 解法の概要
 ----------
 
-SBAでは誤差関数を LM法_ によって最小化する．
+SBAでは誤差関数を LM法_ [#Levenberg_1944]_ によって最小化する．
+さらに，LM法に現れるヤコビ行列の構造に着目し，LM法における更新量の計算を複数の線型方程式に分解することで，計算量を削減している．
 
 .. _LM法: https://en.wikipedia.org/wiki/Levenberg%E2%80%93Marquardt_algorithm
 
@@ -267,3 +268,4 @@ SBAでは再投影誤差を勾配ベースの最適化手法で最小化する�
 
 
 .. [#Gallego_et_al_2015] Gallego, Guillermo, and Anthony Yezzi. "A compact formula for the derivative of a 3-D rotation in exponential coordinates." Journal of Mathematical Imaging and Vision 51.3 (2015): 378-384.
+.. [#Levenberg_1944] Levenberg, Kenneth. "A method for the solution of certain non-linear problems in least squares." Quarterly of applied mathematics 2.2 (1944): 164-168.
