@@ -120,21 +120,148 @@ SBAでは誤差関数を LM法_ [#Levenberg_1944]_ によって最小化する�
 .. _LM法: https://en.wikipedia.org/wiki/Levenberg%E2%80%93Marquardt_algorithm
 
 
-:math:`\mathrm{P}` の更新量を :math:`\delta_{\mathrm{P}}` とする．
+誤差関数を最小化するような :math:`\mathrm{P}` を見つけるため， :math:`\mathrm{P}^{(t)}` を逐次的に更新し，誤差関数を探索する．
+すなわち，時刻 :math:`t` における :math:`\mathrm{P}` の更新量を :math:`\delta_{\mathrm{P}}^{(t)} = \left[ \delta_{\mathbf{a}_{1}}^{\top}, \dots, \delta_{\mathbf{a}_{m}}^{\top}, \delta_{\mathbf{b}_{1}}^{\top}, \dots, \delta_{\mathbf{b}_{n}}^{\top} \right]` ` として，
 
 .. math::
-    \mathrm{P}_{t+1} \leftarrow \mathrm{P}_{t} + \delta_{\mathrm{P}}
+    \mathrm{P}^{(t+1)} \leftarrow \mathrm{P}^{(t)} + \delta_{\mathrm{P}}^{(t)}
 
-この更新量 :math:`\delta_{\mathrm{P}}` は次の線形方程式を解くことによって得られる．
+というふうに :math:`\mathrm{P}^{(t)}` を更新することで誤差関数を最小化するような :math:`\mathrm{P}` を見つける．
+
+LM法を用いる場合，この更新量 :math:`\delta_{\mathrm{P}}` は次の線型方程式を解くことによって得られる．
 
 .. math::
-    (\mathrm{J}^{\top}\mathrm{J} + \lambda \mathrm{I}) \delta_{\mathrm{P}}
-    = \mathrm{J}^{\top} (\mathrm{X} - \hat{\mathrm{X}}) \\
-    :label: lm_update
+    \left[
+        \mathrm{J}^{\top} \mathrm{\mathrm{\Sigma}}^{-1} \mathrm{J} + \lambda \mathrm{I}
+    \right]
+    \delta_{\mathrm{P}}^{(t)}
+    = \mathrm{J}^{\top} \mathrm{\mathrm{\Sigma}}^{-1} \left[ \mathrm{X} - \hat{\mathrm{X}} \right] \\
+    :label: lm-update
 
-ここで :math:`\mathrm{J} = \frac{\partial \hat{\mathrm{X}}}{\partial \mathrm{P}}` である．
+:math:`\mathbf{J}` は :math:`\hat{\mathrm{X}}` のヤコビ行列 :math:`\mathrm{J} = \frac{\partial \hat{\mathrm{X}}}{\partial \mathrm{P}} \rvert_{\mathrm{P}=\mathrm{P}^{(t)}}` であり， :math:`\lambda \in \mathbb{R}, \lambda \geq 0` は damping parameter である．
 
-SBAは，このヤコビ行列 :math:`\mathrm{J}` がスパースであることに着目し，計算量を削減している．
+SBAでは，:math:`\mathrm{J}` の構造に着目し， :eq:`lm-update` をより小さい複数の線型方程式に分解することで，計算を高速化している．
+
+
+計算の分解
+~~~~~~~~~~
+
+まず :math:`\mathrm{J}` を分解する． :math:`\mathrm{P}` の定義より，
+
+.. math::
+    \mathrm{A} = \frac{\partial \hat{\mathrm{X}}}{\partial \mathbf{a}},
+    \mathrm{B} = \frac{\partial \hat{\mathrm{X}}}{\partial \mathbf{b}}
+
+とおけば， :math:`\mathrm{J}` は
+
+.. math::
+    \mathrm{J} = \frac{\partial \hat{\mathrm{X}}}{\partial \mathrm{P}}
+    = \frac{\partial \hat{\mathrm{X}}}{\partial (\mathrm{a}, \mathrm{b})} = \left[ A, B \right]
+    :label: decomposition-J
+
+と書ける．
+
+次に :eq:`lm-update` の右辺を分解する． :eq:`decomposition-J` を用いると， :eq:`lm-update` の右辺は
+
+.. math::
+    \begin{align}
+        \mathbf{\epsilon}_{\mathbf{a}} &= A^{\top} \mathrm{\Sigma}^{-1} (\mathrm{X} - \hat{\mathrm{X}}) \\
+        \mathbf{\epsilon}_{\mathbf{b}} &= B^{\top} \mathrm{\Sigma}^{-1} (\mathrm{X} - \hat{\mathrm{X}})
+    \end{align}
+
+とおくことによって，
+
+.. math::
+    \mathrm{J}^{\top} \mathrm{\mathrm{\Sigma}}^{-1} (\mathrm{X} - \hat{\mathrm{X}})
+    = \begin{bmatrix} \mathbf{\epsilon}_{\mathbf{a}} \\ \mathbf{\epsilon}_{\mathbf{b}} \end{bmatrix}
+
+と書ける．
+
+さらに :eq:`lm-update` の左辺を分解する．
+左辺の :math:`\mathrm{J}^{\top} \mathrm{\mathrm{\Sigma}}^{-1} \mathrm{J}` という項は大きく4つの行列に分解することができる．
+
+.. math::
+    \begin{align}
+        \mathrm{J}^{\top} \mathrm{\mathrm{\Sigma}}^{-1} \mathrm{J}
+        &= \begin{bmatrix}
+            A^{\top} \\ B^{\top}
+        \end{bmatrix}
+        \mathrm{\Sigma}^{-1}
+        \begin{bmatrix}
+            A & B
+        \end{bmatrix} \\
+        &= \begin{bmatrix}
+            A^{\top} \mathrm{\Sigma}^{-1} A & A^{\top} \mathrm{\Sigma}^{-1} B \\
+            B^{\top} \mathrm{\Sigma}^{-1} A & B^{\top} \mathrm{\Sigma}^{-1} B
+        \end{bmatrix} \\
+        &= \begin{bmatrix}
+            \mathrm{U} & \mathrm{W} \\
+            \mathrm{W}^{\top} & \mathrm{V}
+        \end{bmatrix}
+    \end{align}
+
+以上の結果を用いると， :eq:`lm-update` は
+
+.. math::
+    \left[
+    \begin{bmatrix}
+        \mathrm{U} & \mathrm{W} \\
+        \mathrm{W}^{\top} & \mathrm{V}
+    \end{bmatrix}
+    +
+    \begin{bmatrix}
+        \lambda \mathrm{I} & \mathrm{0} \\
+        \mathrm{0} & \lambda \mathrm{I}
+    \end{bmatrix}
+    \right]
+    \begin{bmatrix}
+        \mathbf{\delta}_{\mathbf{a}} \\
+        \mathbf{\delta}_{\mathbf{b}}
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+        \mathbf{\epsilon}_{\mathbf{a}} \\
+        \mathbf{\epsilon}_{\mathbf{b}}
+    \end{bmatrix}
+
+という形にすることができる．
+さらに，
+
+.. math::
+    \begin{align}
+        \mathrm{U}^{*} &= \mathrm{U} + \lambda \mathrm{I} \\
+        \mathrm{V}^{*} &= \mathrm{V} + \lambda \mathrm{I}
+    \end{align}
+
+とおけば， :eq:`lm-update` は
+
+.. math::
+    \begin{bmatrix}
+        \mathrm{U}^{*} & \mathrm{W} \\
+        \mathrm{W}^{\top} & \mathrm{V}^{*}
+    \end{bmatrix}
+    \begin{bmatrix}
+        \mathbf{\delta}_{\mathbf{a}} \\
+        \mathbf{\delta}_{\mathbf{b}}
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+        \mathbf{\epsilon}_{\mathbf{a}} \\
+        \mathbf{\epsilon}_{\mathbf{b}}
+    \end{bmatrix}
+
+となる．
+
+これに対して
+
+.. math::
+    \begin{bmatrix}
+        \mathrm{I} & -\mathrm{W}{\mathrm{V}^{*}}^{-1} \\
+        \mathrm{0} & \mathrm{I}
+    \end{bmatrix}
+
+という行列を左から作用させると，
+
 
 
 ヤコビ行列のスパース性
@@ -151,7 +278,7 @@ SBAは，このヤコビ行列 :math:`\mathrm{J}` がスパースであること
     \frac{\partial \mathrm{Q}(\mathbf{a}_{j}, \mathbf{b}_{i})}{\partial \mathbf{b}_{k}} = \mathbf{0}
 
 が成り立つことから，ヤコビ行列 :math:`\mathrm{J}` はスパースな行列になる．
-この性質を利用すると，:eq:`lm_update` のうち必要な部分のみを計算することで効率よく :math:`\delta_{\mathrm{P}}` を求めることが可能となる．
+この性質を利用すると，:eq:`lm-update` のうち必要な部分のみを計算することで効率よく :math:`\delta_{\mathrm{P}}` を求めることが可能となる．
 
 
 例
