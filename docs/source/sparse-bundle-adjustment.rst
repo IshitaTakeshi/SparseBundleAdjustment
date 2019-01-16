@@ -75,8 +75,8 @@ Tomasi-Kanade法と比較すると，次のような特徴がある．
 で定義される距離関数である．
 
 .. math::
-    \begin{align}
-    \hat{\mathrm{X}} &= \begin{bmatrix}
+    \hat{\mathrm{X}}
+    = \begin{bmatrix}
         \hat{\mathbf{x}}^{\top}_{11},
         \dots,
         \hat{\mathbf{x}}^{\top}_{1m},
@@ -88,10 +88,16 @@ Tomasi-Kanade法と比較すると，次のような特徴がある．
         \dots,
         \hat{\mathbf{x}}^{\top}_{nm}
     \end{bmatrix}^{\top} \\
+    :label: definition-X
+
+.. math::
     \hat{\mathbf{x}}_{ij}
-    &= \mathrm{Q}(\mathbf{a}_{j}, \mathbf{b}_{i}) \\
+    = \mathrm{Q}(\mathbf{a}_{j}, \mathbf{b}_{i})
+    :label: definition-Q
+
+.. math::
     \mathrm{\Sigma}_{\mathrm{X}}
-    &= diag(
+    = diag(
         \mathrm{\Sigma}_{\mathbf{x}_{11}},
         \dots,
         \mathrm{\Sigma}_{\mathbf{x}_{1m}},
@@ -103,7 +109,7 @@ Tomasi-Kanade法と比較すると，次のような特徴がある．
         \dots,
         \mathrm{\Sigma}_{\mathbf{x}_{nm}}
     )
-    \end{align}
+    :label: definition-sigma
 
 とおけば，誤差を次のように表現することができる．
 
@@ -118,10 +124,11 @@ SBAでは，誤差関数を最小化するような :math:`\mathrm{P}` を見つ
 
 .. math::
     \mathrm{P}^{(t+1)} \leftarrow \mathrm{P}^{(t)} + \delta_{\mathrm{P}}^{(t)}
+    :label: parameter-update
 
 というふうに :math:`\mathrm{P}^{(t)}` を更新することで誤差関数を最小化するような :math:`\mathrm{P}` を見つける．
 
-更新量 :math:`\delta_{\mathrm{P}}^{(t)}` の計算にはLM法_ [#Levenberg_1944]_ を用いる．さらに，LM法に現れるヤコビ行列の構造に着目し，更新量の計算を複数の線型方程式に分解することで，計算量を削減している．
+更新量 :math:`\delta_{\mathrm{P}}^{(t)}` の計算には LM法_ [#Levenberg_1944]_ を用いる．さらに，LM法に現れるヤコビ行列の構造に着目し，更新量の計算を複数の線型方程式に分解することで，計算量を削減している．
 
 .. _LM法: https://en.wikipedia.org/wiki/Levenberg%E2%80%93Marquardt_algorithm
 
@@ -196,6 +203,7 @@ SBAでは，:math:`\mathrm{J}` の構造に着目し， :eq:`lm-update` をよ�
             \mathrm{W}^{\top} & \mathrm{V}
         \end{bmatrix}
     \end{align}
+    :label: left-side-decomposition
 
 以上の結果を用いると， :eq:`lm-update` は
 
@@ -324,9 +332,15 @@ SBAでは，:math:`\mathrm{J}` の構造に着目し， :eq:`lm-update` をよ�
 | SBAでは，式 :eq:`lm-update` を直接解く代わりに，それを小さく分割して得た :eq:`derivation-delta-a` と :eq:`derivation-delta-b` をそれぞれ解くことによって，計算コストを削減している．
 
 
-ヤコビ行列のスパース性
-~~~~~~~~~~~~~~~~~~~~~~
-ヤコビ行列 :math:`\mathrm{J}` はスパースな行列になる．これは，:math:`\forall j \neq k` について
+具体的な計算
+------------
+
+前節では，LM法を分解し，より少ない計算量で更新量 :math:`\mathbf{\delta}_{\mathrm{P}}` を求める方法を述べた．
+ここでは，実際にヤコビ行列 :math:`\mathrm{J}` を計算し，その具体的なかたちを求める．
+
+まず，ヤコビ行列 :math:`\mathrm{J}` はスパースな行列になる．
+
+これは，:math:`\forall j \neq k` について
 
 .. math::
     \frac{\partial \mathrm{Q}(\mathbf{a}_{j}, \mathbf{b}_{i})}{\partial \mathbf{a}_{k}} = \mathbf{0}
@@ -346,39 +360,30 @@ SBAでは，:math:`\mathrm{J}` の構造に着目し， :eq:`lm-update` をよ�
 
 .. math::
     \mathrm{J} = \begin{bmatrix}
-        \mathrm{A}_{11} & \mathbf{0} & \mathbf{0} & \mathrm{B}_{11} & \mathbf{0} & \mathbf{0} & \mathbf{0} \\
-        \mathbf{0} & \mathrm{A}_{11} & \mathbf{0} & \mathrm{B}_{12} & \mathbf{0} & \mathbf{0} & \mathbf{0} \\
-        \mathbf{0} & \mathbf{0} & \mathrm{A}_{11} & \mathrm{B}_{13} & \mathbf{0} & \mathbf{0} & \mathbf{0} \\
-        \mathrm{A}_{21} & \mathbf{0} & \mathbf{0} & \mathbf{0} & \mathrm{B}_{21} & \mathbf{0} & \mathbf{0} \\
-        \mathbf{0} & \mathrm{A}_{21} & \mathbf{0} & \mathbf{0} & \mathrm{B}_{22} & \mathbf{0} & \mathbf{0} \\
-        \mathbf{0} & \mathbf{0} & \mathrm{A}_{21} & \mathbf{0} & \mathrm{B}_{23} & \mathbf{0} & \mathbf{0} \\
-        \mathrm{A}_{31} & \mathbf{0} & \mathbf{0} & \mathbf{0} & \mathbf{0} & \mathrm{B}_{31} & \mathbf{0} \\
-        \mathbf{0} & \mathrm{A}_{31} & \mathbf{0} & \mathbf{0} & \mathbf{0} & \mathrm{B}_{32} & \mathbf{0} \\
-        \mathbf{0} & \mathbf{0} & \mathrm{A}_{31} & \mathbf{0} & \mathbf{0} & \mathrm{B}_{33} & \mathbf{0} \\
-        \mathrm{A}_{41} & \mathbf{0} & \mathbf{0} & \mathbf{0} & \mathbf{0} & \mathbf{0} & \mathrm{B}_{41} \\
-        \mathbf{0} & \mathrm{A}_{41} & \mathbf{0} & \mathbf{0} & \mathbf{0} & \mathbf{0} & \mathrm{B}_{42} \\
-        \mathbf{0} & \mathbf{0} & \mathrm{A}_{41} & \mathbf{0} & \mathbf{0} & \mathbf{0} & \mathrm{B}_{43} \\
+        \mathrm{A}_{11} &      \mathbf{0} &      \mathbf{0} & \mathrm{B}_{11} &      \mathbf{0} &      \mathbf{0} &      \mathbf{0} \\
+        \mathbf{0}      & \mathrm{A}_{12} &      \mathbf{0} & \mathrm{B}_{12} &      \mathbf{0} &      \mathbf{0} &      \mathbf{0} \\
+        \mathbf{0}      &      \mathbf{0} & \mathrm{A}_{13} & \mathrm{B}_{13} &      \mathbf{0} &      \mathbf{0} &      \mathbf{0} \\
+        \mathrm{A}_{21} &      \mathbf{0} &      \mathbf{0} &      \mathbf{0} & \mathrm{B}_{21} &      \mathbf{0} &      \mathbf{0} \\
+        \mathbf{0}      & \mathrm{A}_{22} &      \mathbf{0} &      \mathbf{0} & \mathrm{B}_{22} &      \mathbf{0} &      \mathbf{0} \\
+        \mathbf{0}      &      \mathbf{0} & \mathrm{A}_{23} &      \mathbf{0} & \mathrm{B}_{23} &      \mathbf{0} &      \mathbf{0} \\
+        \mathrm{A}_{31} &      \mathbf{0} &      \mathbf{0} &      \mathbf{0} &      \mathbf{0} & \mathrm{B}_{31} &      \mathbf{0} \\
+        \mathbf{0}      & \mathrm{A}_{32} &      \mathbf{0} &      \mathbf{0} &      \mathbf{0} & \mathrm{B}_{32} &      \mathbf{0} \\
+        \mathbf{0}      &      \mathbf{0} & \mathrm{A}_{33} &      \mathbf{0} &      \mathbf{0} & \mathrm{B}_{33} &      \mathbf{0} \\
+        \mathrm{A}_{41} &      \mathbf{0} &      \mathbf{0} &      \mathbf{0} &      \mathbf{0} &      \mathbf{0} & \mathrm{B}_{41} \\
+        \mathbf{0}      & \mathrm{A}_{42} &      \mathbf{0} &      \mathbf{0} &      \mathbf{0} &      \mathbf{0} & \mathrm{B}_{42} \\
+        \mathbf{0}      &      \mathbf{0} & \mathrm{A}_{43} &      \mathbf{0} &      \mathbf{0} &      \mathbf{0} & \mathrm{B}_{43} \\
     \end{bmatrix}
+    :label: concrete-form-J
 
 となる．
 
-計算の簡略化
-------------
-
-
-
-
-勾配の具体的な計算方法
-----------------------
-
-SBAでは再投影誤差を勾配ベースの最適化手法で最小化することで姿勢パラメータ :math:`\mathbf{a}` と3次元点の座標 :math:`\mathbf{b}` を求めているため，画像平面に投影された像 :math:`\hat{\mathbf{x}}` の :math:`\mathbf{a}` と :math:`\mathbf{b}` それぞれについての微分を計算する必要がある．
-
+では :math:`\mathrm{A}_{ij}` や :math:`\mathrm{B}_{ij}` の具体的なかたちを求めてみよう．
 
 姿勢パラメータに関する微分
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-姿勢パラメータ :math:`\mathbf{a} = \left[ \mathbf{t}, \mathbf{\omega} \right]` に関する微分 :math:`\mathrm{A}=\frac{\partial \hat{\mathbf{x}}}{\partial \mathbf{a}} =\begin{bmatrix} \frac{\partial \hat{\mathbf{x}}}{\partial \mathbf{t}} & \frac{\partial \hat{\mathbf{x}}}{\partial \mathbf{\omega}} \end{bmatrix}` は次のようになる．
+姿勢パラメータ :math:`\mathbf{a} = \left[ \mathbf{t}, \mathbf{\omega} \right]` に関する微分 :math:`\mathrm{B}=\frac{\partial \mathrm{Q}(\mathbf{a}, \mathbf{b})}{\partial \mathbf{b}}` は次のようになる．
 
 
 .. math::
@@ -432,7 +437,7 @@ SBAでは再投影誤差を勾配ベースの最適化手法で最小化する�
 3次元点座標に関する微分
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-3次元点の座標 :math:`\mathbf{b}` に関する微分 :math:`\mathrm{B}=\frac{\partial \hat{\mathbf{x}}}{\partial \mathbf{b}}` は次のようになる．
+3次元点の座標 :math:`\mathbf{b}` に関する微分 :math:`\mathrm{B}=\frac{\partial \mathrm{Q}(\mathbf{a}, \mathbf{b})}{\partial \mathbf{b}}` は次のようになる．
 
 .. math::
     \begin{align}
@@ -453,9 +458,13 @@ SBAでは再投影誤差を勾配ベースの最適化手法で最小化する�
     \end{align}
 
 
+以上より， :math:`\mathrm{A}_{ij}` と :math:`\mathrm{B}_{ij}` の具体的なかたちを求めることができた．あとは，
 
-PCG法による更新
----------------
+    1. 上記で得られた :math:`\mathrm{A}_{ij}` と :math:`\mathrm{B}_{ij}` :eq:`concrete-form-J` に代入して :math:`\mathrm{J}` を求める
+    2. :eq:`left-side-decomposition` にしたがって :math:`\mathrm{U},\mathrm{V},\mathrm{W}` を求める
+    3. :eq:`derivation-delta-a` と :eq:`derivation-delta-b` によって姿勢パラメータ :math:`\mathbf{a}` と3次元点の座標 :math:`\mathbf{b}` それぞれについての更新量 :math:`\mathbf{\delta}_{\mathbf{a}}` と :math:`\mathbf{\delta}_{\mathbf{b}}` を求める
+
+という3つのステップによって更新量を求めることができる．
 
 
 .. [#Gallego_et_al_2015] Gallego, Guillermo, and Anthony Yezzi. "A compact formula for the derivative of a 3-D rotation in exponential coordinates." Journal of Mathematical Imaging and Vision 51.3 (2015): 378-384.
