@@ -114,19 +114,16 @@ Tomasi-Kanade法と比較すると，次のような特徴がある．
 解法の概要
 ----------
 
-SBAでは誤差関数を LM法_ [#Levenberg_1944]_ によって最小化する．
-さらに，LM法に現れるヤコビ行列の構造に着目し，LM法における更新量の計算を複数の線型方程式に分解することで，計算量を削減している．
-
-.. _LM法: https://en.wikipedia.org/wiki/Levenberg%E2%80%93Marquardt_algorithm
-
-
-誤差関数を最小化するような :math:`\mathrm{P}` を見つけるため， :math:`\mathrm{P}^{(t)}` を逐次的に更新し，誤差関数を探索する．
-すなわち，時刻 :math:`t` における :math:`\mathrm{P}` の更新量を :math:`\delta_{\mathrm{P}}^{(t)} = \left[ \delta_{\mathbf{a}_{1}}^{\top}, \dots, \delta_{\mathbf{a}_{m}}^{\top}, \delta_{\mathbf{b}_{1}}^{\top}, \dots, \delta_{\mathbf{b}_{n}}^{\top} \right]` ` として，
+SBAでは，誤差関数を最小化するような :math:`\mathrm{P}` を見つけるため， :math:`\mathrm{P}^{(t)}` を逐次的に更新し，誤差関数を探索する．すなわち，時刻 :math:`t` における :math:`\mathrm{P}` の更新量を :math:`\delta_{\mathrm{P}}^{(t)} = \left[ \delta_{\mathbf{a}_{1}}^{\top}, \dots, \delta_{\mathbf{a}_{m}}^{\top}, \delta_{\mathbf{b}_{1}}^{\top}, \dots, \delta_{\mathbf{b}_{n}}^{\top} \right]` ` として，
 
 .. math::
     \mathrm{P}^{(t+1)} \leftarrow \mathrm{P}^{(t)} + \delta_{\mathrm{P}}^{(t)}
 
 というふうに :math:`\mathrm{P}^{(t)}` を更新することで誤差関数を最小化するような :math:`\mathrm{P}` を見つける．
+
+更新量 :math:`\delta_{\mathrm{P}}^{(t)}` の計算にはLM法_ [#Levenberg_1944]_ を用いる．さらに，LM法に現れるヤコビ行列の構造に着目し，更新量の計算を複数の線型方程式に分解することで，計算量を削減している．
+
+.. _LM法: https://en.wikipedia.org/wiki/Levenberg%E2%80%93Marquardt_algorithm
 
 LM法を用いる場合，この更新量 :math:`\delta_{\mathrm{P}}` は次の線型方程式を解くことによって得られる．
 
@@ -143,8 +140,8 @@ LM法を用いる場合，この更新量 :math:`\delta_{\mathrm{P}}` は次の�
 SBAでは，:math:`\mathrm{J}` の構造に着目し， :eq:`lm-update` をより小さい複数の線型方程式に分解することで，計算を高速化している．
 
 
-計算の分解
-~~~~~~~~~~
+線型方程式の分解
+~~~~~~~~~~~~~~~~
 
 まず :math:`\mathrm{J}` を分解する． :math:`\mathrm{P}` の定義より，
 
@@ -233,7 +230,7 @@ SBAでは，:math:`\mathrm{J}` の構造に着目し， :eq:`lm-update` をよ�
         \mathrm{V}^{*} &= \mathrm{V} + \lambda \mathrm{I}
     \end{align}
 
-とおけば， :eq:`lm-update` は
+とおけば，
 
 .. math::
     \begin{bmatrix}
@@ -250,9 +247,7 @@ SBAでは，:math:`\mathrm{J}` の構造に着目し， :eq:`lm-update` をよ�
         \mathbf{\epsilon}_{\mathbf{b}}
     \end{bmatrix}
 
-となる．
-
-これに対して
+となる．この両辺に
 
 .. math::
     \begin{bmatrix}
@@ -262,12 +257,76 @@ SBAでは，:math:`\mathrm{J}` の構造に着目し， :eq:`lm-update` をよ�
 
 という行列を左から作用させると，
 
+.. math::
+    \begin{bmatrix}
+        \mathrm{I} & -\mathrm{W}{\mathrm{V}^{*}}^{-1} \\
+        \mathrm{0} & \mathrm{I}
+    \end{bmatrix}
+    \begin{bmatrix}
+        \mathrm{U}^{*} & \mathrm{W} \\
+        \mathrm{W}^{\top} & \mathrm{V}^{*}
+    \end{bmatrix}
+    \begin{bmatrix}
+        \mathbf{\delta}_{\mathbf{a}} \\
+        \mathbf{\delta}_{\mathbf{b}}
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+        \mathrm{I} & -\mathrm{W}{\mathrm{V}^{*}}^{-1} \\
+        \mathrm{0} & \mathrm{I}
+    \end{bmatrix}
+    \begin{bmatrix}
+        \mathbf{\epsilon}_{\mathbf{a}} \\
+        \mathbf{\epsilon}_{\mathbf{b}}
+    \end{bmatrix} \\
+    :label: left-multiplication
+
+.. math::
+    \begin{bmatrix}
+        \mathrm{U}^{*} - \mathrm{W}{\mathrm{V}^{*}}^{-1}\mathrm{W}^{\top} & \mathrm{0} \\
+        \mathrm{W}^{\top} & \mathrm{V}^{*}
+    \end{bmatrix}
+    \begin{bmatrix}
+        \mathbf{\delta}_{\mathbf{a}} \\
+        \mathbf{\delta}_{\mathbf{b}}
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+        \mathbf{\epsilon}_{\mathbf{a}} - \mathrm{W}{\mathrm{V}^{*}}^{-1}\mathbf{\epsilon}_{\mathbf{b}} \\
+        \mathbf{\epsilon}_{\mathbf{b}}
+    \end{bmatrix}
+    :label: affected-from-left
+
+という形にすることができる．ここから2つの方程式を取り出す．
+すると， :eq:`affected-from-left` において左辺の行列の右上が :math:`\mathrm{0}` になったことから， :math:`\mathbf{\delta}_{\mathbf{a}}` についての式 :eq:`derivation-delta-a` を得ることができる．
+
+.. math::
+    (\mathrm{U}^{*} - \mathrm{W}{\mathrm{V}^{*}}^{-1}\mathrm{W}^{\top}) \mathbf{\delta}_{\mathbf{a}}
+    = \mathbf{\epsilon}_{\mathbf{a}} - \mathrm{W}{\mathrm{V}^{*}}^{-1}\mathbf{\epsilon}_{\mathbf{b}}
+    :label: derivation-delta-a
+
+.. math::
+    \mathrm{V}^{*} \mathbf{\delta}_{\mathbf{b}}
+    = \mathbf{\epsilon}_{\mathbf{b}} - \mathrm{W}^{\top} \mathbf{\delta}_{\mathbf{a}}
+    :label: derivation-delta-b
+
+したがって，:eq:`derivation-delta-a` を先に解き，得られた :math:`\mathbf{\delta}_{\mathbf{a}}` を :eq:`derivation-delta-b` に代入すれば :math:`\mathbf{\delta}_{\mathbf{b}}` を得ることができる．
+
+
+計算量の削減
+~~~~~~~~~~~~
+
+問題のサイズ(視点数や復元対象となるランドマークの数)が大きいときは， :eq:`lm-update` を直接解いて :math:`\mathbf{\delta}_{\mathrm{P}}` を得るよりも， :eq:`derivation-delta-a` と :eq:`derivation-delta-b` によって :math:`\mathbf{\delta}_{\mathbf{a}}` と :math:`\mathbf{\delta}_{\mathbf{b}}` をそれぞれ計算し結合することで :math:`\mathbf{\delta}_{\mathrm{P}}` を得た方が圧倒的に高速である．
+
+| :eq:`lm-update` ， :eq:`derivation-delta-a` ， :eq:`derivation-delta-b` はいずれも線型方程式 :math:`\mathbf{y} = \mathrm{A}\mathbf{x},\; \mathbf{x} \in \mathbb{R}^{n}, \mathbf{y} \in \mathbb{R}^{m}, \mathrm{A} \in \mathbb{R}^{n \times m}` のかたちをしているため，:eq:`lm-update` から直接 :math:`\mathbf{\delta}_{\mathrm{P}}` を得る場合と， :eq:`derivation-delta-a` ， :eq:`derivation-delta-b` をそれぞれ解いて :math:`\mathbf{\delta}_{\mathrm{P}}` を得る場合のどちらも線型方程式を解くことになる．
+| 線型方程式の解は :math:`\mathbf{x} = (\mathrm{A}^{\top}\mathrm{A})^{-1}\mathrm{A}^{\top}\mathbf{y}` を解くことで得られるが， :math:`n \times n` 行列の逆行列の計算は :math:`O(n^{2.3})` 〜 :math:`O(n^{3})` 程度のオーダーとなってしまう．
+  すなわち，問題のサイズが大きくなると計算量が急激に増加するため，大きな問題を直接解くよりも，大きな問題を複数の小さな問題に分割して解いた方が計算コストを抑えることができる．
+| SBAでは，式 :eq:`lm-update` を直接解く代わりに，それを小さく分割して得た :eq:`derivation-delta-a` と :eq:`derivation-delta-b` をそれぞれ解くことによって，計算コストを削減している．
 
 
 ヤコビ行列のスパース性
 ~~~~~~~~~~~~~~~~~~~~~~
-
-:math:`\forall j \neq k` について
+ヤコビ行列 :math:`\mathrm{J}` はスパースな行列になる．これは，:math:`\forall j \neq k` について
 
 .. math::
     \frac{\partial \mathrm{Q}(\mathbf{a}_{j}, \mathbf{b}_{i})}{\partial \mathbf{a}_{k}} = \mathbf{0}
@@ -277,17 +336,13 @@ SBAでは，:math:`\mathrm{J}` の構造に着目し， :eq:`lm-update` をよ�
 .. math::
     \frac{\partial \mathrm{Q}(\mathbf{a}_{j}, \mathbf{b}_{i})}{\partial \mathbf{b}_{k}} = \mathbf{0}
 
-が成り立つことから，ヤコビ行列 :math:`\mathrm{J}` はスパースな行列になる．
-この性質を利用すると，:eq:`lm-update` のうち必要な部分のみを計算することで効率よく :math:`\delta_{\mathrm{P}}` を求めることが可能となる．
+が成り立つためである．
 
 
-例
-~~
-
-
+例えば，:math:`n=4` ，:math:`m=3` のとき，
 :math:`\mathrm{A}_{ij}=\frac{\partial \mathrm{Q}(\mathbf{a}_{j}, \mathbf{b}_{i})}{\partial \mathbf{a}_{j}}` ，
 :math:`\mathrm{B}_{ij}=\frac{\partial \mathrm{Q}(\mathbf{a}_{j}, \mathbf{b}_{i})}{\partial \mathbf{b}_{i}}`
-とおくと，:math:`n=4` ，:math:`m=3` のとき， :math:`\mathrm{J}` は
+とおけば，:math:`\mathrm{J}` は
 
 .. math::
     \mathrm{J} = \begin{bmatrix}
@@ -306,6 +361,11 @@ SBAでは，:math:`\mathrm{J}` の構造に着目し， :eq:`lm-update` をよ�
     \end{bmatrix}
 
 となる．
+
+計算の簡略化
+------------
+
+
 
 
 勾配の具体的な計算方法
@@ -392,6 +452,10 @@ SBAでは再投影誤差を勾配ベースの最適化手法で最小化する�
        \mathrm{R}(\mathbf{\omega})
     \end{align}
 
+
+
+PCG法による更新
+---------------
 
 
 .. [#Gallego_et_al_2015] Gallego, Guillermo, and Anthony Yezzi. "A compact formula for the derivative of a 3-D rotation in exponential coordinates." Journal of Mathematical Imaging and Vision 51.3 (2015): 378-384.
