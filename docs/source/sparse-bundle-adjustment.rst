@@ -7,9 +7,10 @@ Sparse Bundle Adjustment
     \def\Cov{{\mathrm{\Sigma}}}
     \def\D{{\delta}}
     \def\VStar{{\mathrm{V}^{*}}}
-    \def\Db{{\bf{\D}_{\bf{b}}}}
-    \def\Da{{\bf{\D}_{\bf{a}}}}
-
+    \def\mbf#1{{\mathbf #1}}
+    \def\Db{{\mbf{\D}_{\mbf{b}}}}
+    \def\Da{{\mbf{\D}_{\mbf{a}}}}
+    \def\DP{{\mbf{\D}_{\rm{P}}}}
 
 概要
 ----
@@ -38,9 +39,9 @@ Tomasi-Kanade法と比較すると，次のような特徴がある．
 ~~~~~~~~~~
 
 
-- 3次元空間におけるランドマーク座標 :math:`\bf{b}_{j},j=1,\dots,n`
-- カメラ姿勢 :math:`\bf{a}_{i} = [\bf{t}_{i}, \bf{\omega}_{i}],i=1,\dots,m`
-  ただし :math:`\bf{t} \in \mathbb{R}^{3}` は並進を表すベクトルであり，:math:`\bf{\omega} \in \mathfrak{so}(3)` はカメラの回転を表す回転行列 :math:`R \in \mathbb{R}^{3 \times 3}` に対応するリー代数の元である．
+- 3次元空間におけるランドマーク座標 :math:`\mbf{b}_{j},j=1,\dots,n`
+- カメラ姿勢 :math:`\mbf{a}_{i} = [\mbf{t}_{i}, \mbf{\omega}_{i}],i=1,\dots,m`
+  ただし :math:`\mbf{t} \in \mathbb{R}^{3}` は並進を表すベクトルであり，:math:`\mbf{\omega} \in \mathfrak{so}(3)` はカメラの回転を表す回転行列 :math:`R \in \mathbb{R}^{3 \times 3}` に対応するリー代数の元である．
 
 
 入力
@@ -51,72 +52,72 @@ Tomasi-Kanade法と比較すると，次のような特徴がある．
 
 .. math::
     \rm{X} = \begin{bmatrix}
-        \bf{x}^{\top}_{11},
+        \mbf{x}^{\top}_{11},
         \dots,
-        \bf{x}^{\top}_{1m},
-        \bf{x}^{\top}_{21},
+        \mbf{x}^{\top}_{1m},
+        \mbf{x}^{\top}_{21},
         \dots,
-        \bf{x}^{\top}_{2m},
+        \mbf{x}^{\top}_{2m},
         \dots,
-        \bf{x}^{\top}_{n1},
+        \mbf{x}^{\top}_{n1},
         \dots,
-        \bf{x}^{\top}_{nm}
+        \mbf{x}^{\top}_{nm}
     \end{bmatrix}
 
 
 目的
 ----
 
-投影モデルを :math:`\rm{Q}(\bf{a}_{i},\bf{b}_{j})` とし，以下の誤差関数を最小化するような :math:`\rm{P} = \left[\bf{a}, \bf{b}\right] = \left[ \bf{a}^{\top}_{1}, \dots, \bf{a}^{\top}_{m}, \bf{b}^{\top}_{1}, \dots, \bf{b}^{\top}_{n} \right]` を求める．
+投影モデルを :math:`\rm{Q}(\mbf{a}_{i},\mbf{b}_{j})` とし，以下の誤差関数を最小化するような :math:`\rm{P} = \left[\mbf{a}, \mbf{b}\right] = \left[ \mbf{a}^{\top}_{1}, \dots, \mbf{a}^{\top}_{m}, \mbf{b}^{\top}_{1}, \dots, \mbf{b}^{\top}_{n} \right]` を求める．
 
 .. math::
     E(\rm{P}) = \begin{align}
-    \sum_{i=1}^{n} \sum_{j=1}^{m} d_{\Cov_{\bf{x}_{ij}}}(\rm{Q}(\bf{a}_{j}, \bf{b}_{i}), \bf{x}_{ij})^{2}
+    \sum_{i=1}^{n} \sum_{j=1}^{m} d_{\Cov_{\mbf{x}_{ij}}}(\rm{Q}(\mbf{a}_{j}, \mbf{b}_{i}), \mbf{x}_{ij})^{2}
     \end{align}
 
 
-ここで :math:`d_{\Cov_{\bf{x}}}` は :math:`\bf{x}` に対応する分散共分散行列を :math:`\Cov_{\bf{x}}` として
+ここで :math:`d_{\Cov_{\mbf{x}}}` は :math:`\mbf{x}` に対応する分散共分散行列を :math:`\Cov_{\mbf{x}}` として
 
 .. math::
-    d_{\Cov_{\bf{x}}}(\bf{x}_{1}, \bf{x}_{2}) =
-    \sqrt{(\bf{x}_{1} - \bf{x}_{2})^{\top} \Cov^{-1}_{\bf{x}} (\bf{x}_{1} - \bf{x}_{2})}
+    d_{\Cov_{\mbf{x}}}(\mbf{x}_{1}, \mbf{x}_{2}) =
+    \sqrt{(\mbf{x}_{1} - \mbf{x}_{2})^{\top} \Cov^{-1}_{\mbf{x}} (\mbf{x}_{1} - \mbf{x}_{2})}
 
 で定義される距離関数である．
 
 .. math::
     \hat{\rm{X}}
     = \begin{bmatrix}
-        \hat{\bf{x}}^{\top}_{11},
+        \hat{\mbf{x}}^{\top}_{11},
         \dots,
-        \hat{\bf{x}}^{\top}_{1m},
-        \hat{\bf{x}}^{\top}_{21},
+        \hat{\mbf{x}}^{\top}_{1m},
+        \hat{\mbf{x}}^{\top}_{21},
         \dots,
-        \hat{\bf{x}}^{\top}_{2m},
+        \hat{\mbf{x}}^{\top}_{2m},
         \dots,
-        \hat{\bf{x}}^{\top}_{n1},
+        \hat{\mbf{x}}^{\top}_{n1},
         \dots,
-        \hat{\bf{x}}^{\top}_{nm}
+        \hat{\mbf{x}}^{\top}_{nm}
     \end{bmatrix}^{\top} \\
     :label: definition-X
 
 .. math::
-    \hat{\bf{x}}_{ij}
-    = \rm{Q}(\bf{a}_{j}, \bf{b}_{i})
+    \hat{\mbf{x}}_{ij}
+    = \rm{Q}(\mbf{a}_{j}, \mbf{b}_{i})
     :label: definition-Q
 
 .. math::
     \Cov_{\rm{X}}
     = diag(
-        \Cov_{\bf{x}_{11}},
+        \Cov_{\mbf{x}_{11}},
         \dots,
-        \Cov_{\bf{x}_{1m}},
-        \Cov_{\bf{x}_{21}},
+        \Cov_{\mbf{x}_{1m}},
+        \Cov_{\mbf{x}_{21}},
         \dots,
-        \Cov_{\bf{x}_{2m}},
+        \Cov_{\mbf{x}_{2m}},
         \dots,
-        \Cov_{\bf{x}_{n1}},
+        \Cov_{\mbf{x}_{n1}},
         \dots,
-        \Cov_{\bf{x}_{nm}}
+        \Cov_{\mbf{x}_{nm}}
     )
     :label: definition-sigma
 
@@ -130,7 +131,7 @@ Tomasi-Kanade法と比較すると，次のような特徴がある．
 解法の概要
 ----------
 
-SBAでは，誤差関数を最小化するような :math:`\rm{P}` を見つけるため， :math:`\rm{P}^{(t)}` を逐次的に更新し，誤差関数を探索する．すなわち，時刻 :math:`t` における :math:`\rm{P}` の更新量を :math:`\D_{\rm{P}}^{(t)} = \left[ \D_{\bf{a}_{1}}^{\top}, \dots, \D_{\bf{a}_{m}}^{\top}, \D_{\bf{b}_{1}}^{\top}, \dots, \D_{\bf{b}_{n}}^{\top} \right]` ` として，
+SBAでは，誤差関数を最小化するような :math:`\rm{P}` を見つけるため， :math:`\rm{P}^{(t)}` を逐次的に更新し，誤差関数を探索する．すなわち，時刻 :math:`t` における :math:`\rm{P}` の更新量を :math:`\D_{\rm{P}}^{(t)} = \left[ \D_{\mbf{a}_{1}}^{\top}, \dots, \D_{\mbf{a}_{m}}^{\top}, \D_{\mbf{b}_{1}}^{\top}, \dots, \D_{\mbf{b}_{n}}^{\top} \right]` ` として，
 
 .. math::
     \rm{P}^{(t+1)} \leftarrow \rm{P}^{(t)} + \D_{\rm{P}}^{(t)}
@@ -151,7 +152,7 @@ SBAでは，誤差関数を最小化するような :math:`\rm{P}` を見つけ�
     = \rm{J}^{\top} \rm{\Cov}^{-1} \left[ \rm{X} - \hat{\rm{X}} \right] \\
     :label: lm-update
 
-:math:`\bf{J}` は :math:`\hat{\rm{X}}` のヤコビ行列 :math:`\rm{J} = \frac{\partial \hat{\rm{X}}}{\partial \rm{P}} \rvert_{\rm{P}=\rm{P}^{(t)}}` であり， :math:`\lambda \in \mathbb{R}, \lambda \geq 0` は damping parameter である．
+:math:`\mbf{J}` は :math:`\hat{\rm{X}}` のヤコビ行列 :math:`\rm{J} = \frac{\partial \hat{\rm{X}}}{\partial \rm{P}} \rvert_{\rm{P}=\rm{P}^{(t)}}` であり， :math:`\lambda \in \mathbb{R}, \lambda \geq 0` は damping parameter である．
 
 SBAでは，:math:`\rm{J}` の構造に着目し， :eq:`lm-update` をより小さい複数の線型方程式に分解する．さらに，分解によって得られた方程式がスパースな行列によって構成されていることに着目し，計算を高速化している．
 
@@ -159,7 +160,7 @@ SBAでは，:math:`\rm{J}` の構造に着目し， :eq:`lm-update` をより小
 線型方程式の分解
 ~~~~~~~~~~~~~~~~
 
-まず :math:`\rm{J}` を分解する． :math:`\rm{P}` の定義より， :math:`\rm{A} = \frac{\partial \hat{\rm{X}}}{\partial \bf{a}},\rm{B} = \frac{\partial \hat{\rm{X}}}{\partial \bf{b}}` とおけば， :math:`\rm{J}` は
+まず :math:`\rm{J}` を分解する． :math:`\rm{P}` の定義より， :math:`\rm{A} = \frac{\partial \hat{\rm{X}}}{\partial \mbf{a}},\rm{B} = \frac{\partial \hat{\rm{X}}}{\partial \mbf{b}}` とおけば， :math:`\rm{J}` は
 
 .. math::
     \rm{J} = \frac{\partial \hat{\rm{X}}}{\partial \rm{P}}
@@ -172,15 +173,15 @@ SBAでは，:math:`\rm{J}` の構造に着目し， :eq:`lm-update` をより小
 
 .. math::
     \begin{align}
-        \bf{\epsilon}_{\bf{a}} &= A^{\top} \Cov^{-1} (\rm{X} - \hat{\rm{X}}) \\
-        \bf{\epsilon}_{\bf{b}} &= B^{\top} \Cov^{-1} (\rm{X} - \hat{\rm{X}})
+        \mbf{\epsilon}_{\mbf{a}} &= A^{\top} \Cov^{-1} (\rm{X} - \hat{\rm{X}}) \\
+        \mbf{\epsilon}_{\mbf{b}} &= B^{\top} \Cov^{-1} (\rm{X} - \hat{\rm{X}})
     \end{align}
 
 とおくことによって，
 
 .. math::
     \rm{J}^{\top} \rm{\Cov}^{-1} (\rm{X} - \hat{\rm{X}})
-    = \begin{bmatrix} \bf{\epsilon}_{\bf{a}} \\ \bf{\epsilon}_{\bf{b}} \end{bmatrix}
+    = \begin{bmatrix} \mbf{\epsilon}_{\mbf{a}} \\ \mbf{\epsilon}_{\mbf{b}} \end{bmatrix}
 
 と書ける．
 
@@ -228,8 +229,8 @@ SBAでは，:math:`\rm{J}` の構造に着目し， :eq:`lm-update` をより小
     \end{bmatrix}
     =
     \begin{bmatrix}
-        \bf{\epsilon}_{\bf{a}} \\
-        \bf{\epsilon}_{\bf{b}}
+        \mbf{\epsilon}_{\mbf{a}} \\
+        \mbf{\epsilon}_{\mbf{b}}
     \end{bmatrix}
 
 という形にすることができる．
@@ -254,8 +255,8 @@ SBAでは，:math:`\rm{J}` の構造に着目し， :eq:`lm-update` をより小
     \end{bmatrix}
     =
     \begin{bmatrix}
-        \bf{\epsilon}_{\bf{a}} \\
-        \bf{\epsilon}_{\bf{b}}
+        \mbf{\epsilon}_{\mbf{a}} \\
+        \mbf{\epsilon}_{\mbf{b}}
     \end{bmatrix}
 
 となる．この両辺に
@@ -287,8 +288,8 @@ SBAでは，:math:`\rm{J}` の構造に着目し， :eq:`lm-update` をより小
         \rm{0} & \rm{I}
     \end{bmatrix}
     \begin{bmatrix}
-        \bf{\epsilon}_{\bf{a}} \\
-        \bf{\epsilon}_{\bf{b}}
+        \mbf{\epsilon}_{\mbf{a}} \\
+        \mbf{\epsilon}_{\mbf{b}}
     \end{bmatrix} \\
     :label: left-multiplication
 
@@ -303,8 +304,8 @@ SBAでは，:math:`\rm{J}` の構造に着目し， :eq:`lm-update` をより小
     \end{bmatrix}
     =
     \begin{bmatrix}
-        \bf{\epsilon}_{\bf{a}} - \rm{W}{\VStar}^{-1}\bf{\epsilon}_{\bf{b}} \\
-        \bf{\epsilon}_{\bf{b}}
+        \mbf{\epsilon}_{\mbf{a}} - \rm{W}{\VStar}^{-1}\mbf{\epsilon}_{\mbf{b}} \\
+        \mbf{\epsilon}_{\mbf{b}}
     \end{bmatrix}
     :label: affected-from-left
 
@@ -313,12 +314,12 @@ SBAでは，:math:`\rm{J}` の構造に着目し， :eq:`lm-update` をより小
 
 .. math::
     (\rm{U}^{*} - \rm{W}{\VStar}^{-1}\rm{W}^{\top}) \Da
-    = \bf{\epsilon}_{\bf{a}} - \rm{W}{\VStar}^{-1}\bf{\epsilon}_{\bf{b}}
+    = \mbf{\epsilon}_{\mbf{a}} - \rm{W}{\VStar}^{-1}\mbf{\epsilon}_{\mbf{b}}
     :label: derivation-da
 
 .. math::
     \VStar \Db
-    = \bf{\epsilon}_{\bf{b}} - \rm{W}^{\top} \Da
+    = \mbf{\epsilon}_{\mbf{b}} - \rm{W}^{\top} \Da
     :label: derivation-db
 
 したがって，:eq:`derivation-da` を先に解き，得られた :math:`\Da` を :eq:`derivation-db` に代入すれば :math:`\Db` を得ることができる．
@@ -327,7 +328,7 @@ SBAでは，:math:`\rm{J}` の構造に着目し， :eq:`lm-update` をより小
 具体的な計算
 ------------
 
-前節では，LM法を分解し，より少ない計算量で更新量 :math:`\bf{\D}_{\rm{P}}` を求める方法を述べた．
+前節では，LM法を分解し，より少ない計算量で更新量 :math:`\DP` を求める方法を述べた．
 ここでは，実際にヤコビ行列 :math:`\rm{J}` を計算し，その具体的なかたちを求める．
 
 まず，ヤコビ行列 :math:`\rm{J}` はスパースな行列になる．
@@ -335,35 +336,35 @@ SBAでは，:math:`\rm{J}` の構造に着目し， :eq:`lm-update` をより小
 これは，:math:`\forall j \neq k` について
 
 .. math::
-    \frac{\partial \rm{Q}(\bf{a}_{j}, \bf{b}_{i})}{\partial \bf{a}_{k}} = \bf{0}
+    \frac{\partial \rm{Q}(\mbf{a}_{j}, \mbf{b}_{i})}{\partial \mbf{a}_{k}} = \mbf{0}
 
 :math:`\forall i \neq k` について
 
 .. math::
-    \frac{\partial \rm{Q}(\bf{a}_{j}, \bf{b}_{i})}{\partial \bf{b}_{k}} = \bf{0}
+    \frac{\partial \rm{Q}(\mbf{a}_{j}, \mbf{b}_{i})}{\partial \mbf{b}_{k}} = \mbf{0}
 
 が成り立つためである．
 
 
 例えば，:math:`n=4` ，:math:`m=3` のとき，
-:math:`\rm{A}_{ij}=\frac{\partial \rm{Q}(\bf{a}_{j}, \bf{b}_{i})}{\partial \bf{a}_{j}}` ，
-:math:`\rm{B}_{ij}=\frac{\partial \rm{Q}(\bf{a}_{j}, \bf{b}_{i})}{\partial \bf{b}_{i}}`
+:math:`\rm{A}_{ij}=\frac{\partial \rm{Q}(\mbf{a}_{j}, \mbf{b}_{i})}{\partial \mbf{a}_{j}}` ，
+:math:`\rm{B}_{ij}=\frac{\partial \rm{Q}(\mbf{a}_{j}, \mbf{b}_{i})}{\partial \mbf{b}_{i}}`
 とおけば，:math:`\rm{J}` は
 
 .. math::
     \rm{J} = \begin{bmatrix}
-        \rm{A}_{11} &      \bf{0} &      \bf{0} & \rm{B}_{11} &      \bf{0} &      \bf{0} &      \bf{0} \\
-        \bf{0}      & \rm{A}_{12} &      \bf{0} & \rm{B}_{12} &      \bf{0} &      \bf{0} &      \bf{0} \\
-        \bf{0}      &      \bf{0} & \rm{A}_{13} & \rm{B}_{13} &      \bf{0} &      \bf{0} &      \bf{0} \\
-        \rm{A}_{21} &      \bf{0} &      \bf{0} &      \bf{0} & \rm{B}_{21} &      \bf{0} &      \bf{0} \\
-        \bf{0}      & \rm{A}_{22} &      \bf{0} &      \bf{0} & \rm{B}_{22} &      \bf{0} &      \bf{0} \\
-        \bf{0}      &      \bf{0} & \rm{A}_{23} &      \bf{0} & \rm{B}_{23} &      \bf{0} &      \bf{0} \\
-        \rm{A}_{31} &      \bf{0} &      \bf{0} &      \bf{0} &      \bf{0} & \rm{B}_{31} &      \bf{0} \\
-        \bf{0}      & \rm{A}_{32} &      \bf{0} &      \bf{0} &      \bf{0} & \rm{B}_{32} &      \bf{0} \\
-        \bf{0}      &      \bf{0} & \rm{A}_{33} &      \bf{0} &      \bf{0} & \rm{B}_{33} &      \bf{0} \\
-        \rm{A}_{41} &      \bf{0} &      \bf{0} &      \bf{0} &      \bf{0} &      \bf{0} & \rm{B}_{41} \\
-        \bf{0}      & \rm{A}_{42} &      \bf{0} &      \bf{0} &      \bf{0} &      \bf{0} & \rm{B}_{42} \\
-        \bf{0}      &      \bf{0} & \rm{A}_{43} &      \bf{0} &      \bf{0} &      \bf{0} & \rm{B}_{43} \\
+        \rm{A}_{11} &      \mbf{0} &      \mbf{0} & \rm{B}_{11} &      \mbf{0} &      \mbf{0} &      \mbf{0} \\
+        \mbf{0}      & \rm{A}_{12} &      \mbf{0} & \rm{B}_{12} &      \mbf{0} &      \mbf{0} &      \mbf{0} \\
+        \mbf{0}      &      \mbf{0} & \rm{A}_{13} & \rm{B}_{13} &      \mbf{0} &      \mbf{0} &      \mbf{0} \\
+        \rm{A}_{21} &      \mbf{0} &      \mbf{0} &      \mbf{0} & \rm{B}_{21} &      \mbf{0} &      \mbf{0} \\
+        \mbf{0}      & \rm{A}_{22} &      \mbf{0} &      \mbf{0} & \rm{B}_{22} &      \mbf{0} &      \mbf{0} \\
+        \mbf{0}      &      \mbf{0} & \rm{A}_{23} &      \mbf{0} & \rm{B}_{23} &      \mbf{0} &      \mbf{0} \\
+        \rm{A}_{31} &      \mbf{0} &      \mbf{0} &      \mbf{0} &      \mbf{0} & \rm{B}_{31} &      \mbf{0} \\
+        \mbf{0}      & \rm{A}_{32} &      \mbf{0} &      \mbf{0} &      \mbf{0} & \rm{B}_{32} &      \mbf{0} \\
+        \mbf{0}      &      \mbf{0} & \rm{A}_{33} &      \mbf{0} &      \mbf{0} & \rm{B}_{33} &      \mbf{0} \\
+        \rm{A}_{41} &      \mbf{0} &      \mbf{0} &      \mbf{0} &      \mbf{0} &      \mbf{0} & \rm{B}_{41} \\
+        \mbf{0}      & \rm{A}_{42} &      \mbf{0} &      \mbf{0} &      \mbf{0} &      \mbf{0} & \rm{B}_{42} \\
+        \mbf{0}      &      \mbf{0} & \rm{A}_{43} &      \mbf{0} &      \mbf{0} &      \mbf{0} & \rm{B}_{43} \\
     \end{bmatrix}
     :label: concrete-form-J
 
@@ -375,21 +376,21 @@ SBAでは，:math:`\rm{J}` の構造に着目し， :eq:`lm-update` をより小
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-姿勢パラメータ :math:`\bf{a} = \left[ \bf{t}, \bf{\omega} \right]` に関する微分 :math:`\rm{B}=\frac{\partial \rm{Q}(\bf{a}, \bf{b})}{\partial \bf{b}}` は次のようになる．
+姿勢パラメータ :math:`\mbf{a} = \left[ \mbf{t}, \mbf{\omega} \right]` に関する微分 :math:`\rm{B}=\frac{\partial \rm{Q}(\mbf{a}, \mbf{b})}{\partial \mbf{b}}` は次のようになる．
 
 
 .. math::
     \begin{align}
-    \frac{\partial \hat{\bf{x}}}{\partial \bf{t}}
-    &= \frac{\partial \pi(\bf{p})}{\partial \bf{p}}
-       \bigg\rvert_{\bf{p}=\rm{K}(\rm{R}\bf{b} + \bf{t})}
+    \frac{\partial \hat{\mbf{x}}}{\partial \mbf{t}}
+    &= \frac{\partial \pi(\mbf{p})}{\partial \mbf{p}}
+       \bigg\rvert_{\mbf{p}=\rm{K}(\rm{R}\mbf{b} + \mbf{t})}
        \cdot
        \rm{K}
        \cdot
-       \frac{\partial (\rm{R}(\bf{\omega})\bf{b} + \bf{v})}{\partial \bf{v}}
-       \bigg\rvert_{\bf{v}=\bf{t}} \\
-    &= \frac{\partial \pi(\bf{p})}{\partial \bf{p}}
-       \bigg\rvert_{\bf{p}=\rm{K}(\rm{R}\bf{b} + \bf{t})}
+       \frac{\partial (\rm{R}(\mbf{\omega})\mbf{b} + \mbf{v})}{\partial \mbf{v}}
+       \bigg\rvert_{\mbf{v}=\mbf{t}} \\
+    &= \frac{\partial \pi(\mbf{p})}{\partial \mbf{p}}
+       \bigg\rvert_{\mbf{p}=\rm{K}(\rm{R}\mbf{b} + \mbf{t})}
        \cdot
        \rm{K}
     \end{align}
@@ -397,56 +398,56 @@ SBAでは，:math:`\rm{J}` の構造に着目し， :eq:`lm-update` をより小
 
 .. math::
     \begin{align}
-    \frac{\partial \hat{\bf{x}}}{\partial \bf{\omega}}
-    &= \frac{\partial \pi(\bf{p})}{\partial \bf{p}}
-       \bigg\rvert_{\bf{p}=\rm{K}(\rm{R}\bf{b} + \bf{t})}
+    \frac{\partial \hat{\mbf{x}}}{\partial \mbf{\omega}}
+    &= \frac{\partial \pi(\mbf{p})}{\partial \mbf{p}}
+       \bigg\rvert_{\mbf{p}=\rm{K}(\rm{R}\mbf{b} + \mbf{t})}
        \cdot
        \rm{K}
        \cdot
-       \frac{\partial (\rm{R}(\bf{v})\bf{b} + \bf{t})}{\partial \bf{v}}
-       \bigg\rvert_{\bf{v}=\bf{\omega}} \\
-    &= \frac{\partial \pi(\bf{p})}{\partial \bf{p}}
-       \bigg\rvert_{\bf{p}=\rm{K}(\rm{R}\bf{b} + \bf{t})}
+       \frac{\partial (\rm{R}(\mbf{v})\mbf{b} + \mbf{t})}{\partial \mbf{v}}
+       \bigg\rvert_{\mbf{v}=\mbf{\omega}} \\
+    &= \frac{\partial \pi(\mbf{p})}{\partial \mbf{p}}
+       \bigg\rvert_{\mbf{p}=\rm{K}(\rm{R}\mbf{b} + \mbf{t})}
        \cdot
        \rm{K}
        \cdot
-       \frac{\partial (\rm{R}(\bf{v})\bf{b})}{\partial \bf{v}}
-       \bigg\rvert_{\bf{v}=\bf{\omega}}
+       \frac{\partial (\rm{R}(\mbf{v})\mbf{b})}{\partial \mbf{v}}
+       \bigg\rvert_{\mbf{v}=\mbf{\omega}}
     \end{align}
 
 
-ここで， :math:`\frac{\partial (\rm{R}(\bf{v})\bf{b})}{\partial \bf{v}}` は [#Gallego_et_al_2015]_ による計算結果を用いることができる
+ここで， :math:`\frac{\partial (\rm{R}(\mbf{v})\mbf{b})}{\partial \mbf{v}}` は [#Gallego_et_al_2015]_ による計算結果を用いることができる
 
 .. math::
-   \frac{\partial (\rm{R}(\bf{v})\bf{b})}{\partial \bf{v}}
-   = -\rm{R}(\bf{v}) \left[ \bf{b} \right]_{\times}
+   \frac{\partial (\rm{R}(\mbf{v})\mbf{b})}{\partial \mbf{v}}
+   = -\rm{R}(\mbf{v}) \left[ \mbf{b} \right]_{\times}
      \frac{
-        \bf{v}\bf{v}^{\top} +
-        (\rm{R}(\bf{v})^{\top} - \rm{I}) \left[ \bf{v} \right]_{\times}
-     }{||\bf{v}||^{2}}
+        \mbf{v}\mbf{v}^{\top} +
+        (\rm{R}(\mbf{v})^{\top} - \rm{I}) \left[ \mbf{v} \right]_{\times}
+     }{||\mbf{v}||^{2}}
 
 
 3次元点座標に関する微分
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-3次元点の座標 :math:`\bf{b}` に関する微分 :math:`\rm{B}=\frac{\partial \rm{Q}(\bf{a}, \bf{b})}{\partial \bf{b}}` は次のようになる．
+3次元点の座標 :math:`\mbf{b}` に関する微分 :math:`\rm{B}=\frac{\partial \rm{Q}(\mbf{a}, \mbf{b})}{\partial \mbf{b}}` は次のようになる．
 
 .. math::
     \begin{align}
-    \frac{\partial \hat{\bf{x}}}{\partial \bf{b}}
-    &= \frac{\partial \pi(\bf{p})}{\partial \bf{p}}
-       \bigg\rvert_{\bf{p}=\rm{K}(\rm{R}\bf{b} + \bf{t})}
+    \frac{\partial \hat{\mbf{x}}}{\partial \mbf{b}}
+    &= \frac{\partial \pi(\mbf{p})}{\partial \mbf{p}}
+       \bigg\rvert_{\mbf{p}=\rm{K}(\rm{R}\mbf{b} + \mbf{t})}
        \cdot
        \rm{K}
        \cdot
-       \frac{\partial (\rm{R}(\bf{\omega})\bf{v} + \bf{t})}{\partial \bf{v}}
-       \bigg\rvert_{\bf{v}=\bf{b}} \\
-    &= \frac{\partial \pi(\bf{p})}{\partial \bf{p}}
-       \bigg\rvert_{\bf{p}=\rm{K}(\rm{R}\bf{b} + \bf{t})}
+       \frac{\partial (\rm{R}(\mbf{\omega})\mbf{v} + \mbf{t})}{\partial \mbf{v}}
+       \bigg\rvert_{\mbf{v}=\mbf{b}} \\
+    &= \frac{\partial \pi(\mbf{p})}{\partial \mbf{p}}
+       \bigg\rvert_{\mbf{p}=\rm{K}(\rm{R}\mbf{b} + \mbf{t})}
        \cdot
        \rm{K}
        \cdot
-       \rm{R}(\bf{\omega})
+       \rm{R}(\mbf{\omega})
     \end{align}
 
 
@@ -454,7 +455,7 @@ SBAでは，:math:`\rm{J}` の構造に着目し， :eq:`lm-update` をより小
 
     1. 上記で得られた :math:`\rm{A}_{ij}` と :math:`\rm{B}_{ij}` :eq:`concrete-form-J` に代入して :math:`\rm{J}` を求める
     2. :eq:`left-side-decomposition` にしたがって :math:`\rm{U},\rm{V},\rm{W}` を求める
-    3. :eq:`derivation-da` と :eq:`derivation-db` によって姿勢パラメータ :math:`\bf{a}` と3次元点の座標 :math:`\bf{b}` それぞれについての更新量 :math:`\Da` と :math:`\Db` を求める
+    3. :eq:`derivation-da` と :eq:`derivation-db` によって姿勢パラメータ :math:`\mbf{a}` と3次元点の座標 :math:`\mbf{b}` それぞれについての更新量 :math:`\Da` と :math:`\Db` を求める
 
 という3つのステップによって更新量を求めることができる．
 
@@ -462,7 +463,23 @@ SBAでは，:math:`\rm{J}` の構造に着目し， :eq:`lm-update` をより小
 計算量の削減
 ~~~~~~~~~~~~
 
-前節までで更新量の計算 :eq:`lm-update` を2つの計算 :eq:`derivation-da` :eq:`derivation-db` に分解する過程を見た．SBAは， :math:`\VStar` がスパースであるという性質に基づいて計算量を削減している．
+前節までで更新量の計算 :eq:`lm-update` を2つの計算 :eq:`derivation-da` :eq:`derivation-db` に分解する過程を見た．
+
+| :eq:`lm-update` ， :eq:`derivation-da` ， :eq:`derivation-db` はいずれも線型方程式とみなすことができる．
+| 線型方程式 :math:`\mbf{y} = \rm{A}\mbf{x},\; \mbf{x} \in \mathbb{R}^{n}, \mbf{y} \in \mathbb{R}^{m}, \rm{A} \in \mathbb{R}^{n \times m}` の解は
+
+.. math::
+    \begin{align}
+        \mbf{x}
+        &= (\rm{A}^{\top}\rm{A})^{-1}\rm{A}^{\top}\mbf{y} \\
+        &= \rm{K}\rm{A}^{\top}\mbf{y},\rm{K} \\
+        &= \rm{A}^{\top}\rm{A} \\
+        K &\in \mathbb{R}^{n \times n}
+    \end{align}
+
+| によって得られるが，行列 :math:`\rm{K}` のサイズが大きくなると計算量が急激に増加する．これは， :math:`n \times n` 行列の逆行列を計算するアルゴリズムが :math:`O(n^{2.3})` 〜 :math:`O(n^{3})` 程度の計算量をもつことに起因する [#Coppersmith_et_al_1990]_ ．したがって，線型方程式を高速に解くには，問題の構造を見極め， :math:`\rm{K}` の逆行列を直接計算することを避けて計算量を減らす必要がある．
+| SBAでは， :eq:`lm-update` を直接解くのではなく，それを分割して得た :eq:`derivation-da` と :eq:`derivation-db` をそれぞれ解くことで :math:`\DP` を得ている．さらに， :math:`\VStar` がスパースであるという性質に基づいて計算量を大幅に削減している．
+
 
 
 :eq:`concrete-form-J` で定義された :math:`\rm{J}` を用いて :math:`\VStar` を計算すると次のようになる．
@@ -488,7 +505,7 @@ SBAでは，:math:`\rm{J}` の構造に着目し， :eq:`lm-update` をより小
 
 
 | :eq:`derivation-da` には :math:`{\VStar}` の逆行列が両辺に含まれている．また， :eq:`derivation-db` を解いて :math:`\Db` を得る際にも両辺に左から :math:`{\VStar}` の逆行列をかける必要がある．
-| 一般的な :math:`n \times n` 行列の逆行列の計算は :math:`O(n^{2.3})` 〜 :math:`O(n^{3})` 程度のオーダーとなってしまうため， :math:`\VStar` のサイズが大きいとその逆行列を求めるのに多大なコストがかかってしまう．しかし， :math:`\VStar` がスパースな行列であることに着目すると， :math:`\VStar` の逆行列は
+| :math:`\VStar` のサイズが大きいとその逆行列を求めるのに多大なコストがかかってしまう．しかし， :math:`\VStar` がスパースな行列であることに着目すると， :math:`\VStar` の逆行列は
 
 .. math::
     {\VStar}^{-1} = \begin{bmatrix}
@@ -497,19 +514,14 @@ SBAでは，:math:`\rm{J}` の構造に着目し， :eq:`lm-update` をより小
         \rm{0} & \rm{0} & {\VStar}^{-1}_{3} & \rm{0} \\
         \rm{0} & \rm{0} & \rm{0} & {\VStar}^{-1}_{4} \\
     \end{bmatrix}
+    :label: v-star-inv
 
-となるため， :math:`\VStar_{i},i=1,\dots,m` のそれぞれについて逆行列を求めればよいことがわかる．したがって :math:`\VStar` の逆行列の計算量は視点数 :math:`m` に対して線型に増加することになり， :math:`\VStar` の逆行列を直接求めるのと比較すると計算量を一気に削減できる．
+となるため， :math:`\VStar_{i},i=1,\dots,m` のそれぞれについて逆行列を求めればよいことがわかる．結果として :math:`\VStar` の逆行列の計算量は視点数 :math:`m` に対して線型に増加することになり， :math:`\VStar` の逆行列を直接求めるのと比較すると計算量を一気に削減できる．
 
 :math:`\Da` を求める際には， :math:`\rm{S} = \rm{U}^{*} - \rm{W}{\VStar}^{-1}\rm{W}^{\top}` の逆行列を :eq:`derivation-da` の両辺に左からかける必要がある．しかし，一般的にランドマーク数 :math:`n` よりもカメラの視点数 :math:`m` の方が圧倒的に小さい :math:`(m \ll n)` ため， :math:`\rm{S}` のサイズは :math:`\VStar` と比べると圧倒的に小さい．したがって， :math:`\rm{S}` の逆行列を求める処理は全体の計算量にはほとんど影響しない．
 
-問題のサイズ(視点数や復元対象となるランドマークの数)が大きいときは， :eq:`lm-update` を直接解いて :math:`\bf{\D}_{\rm{P}}` を得るよりも， :eq:`derivation-da` と :eq:`derivation-db` によって :math:`\Da` と :math:`\Db` をそれぞれ計算し結合することで :math:`\bf{\D}_{\rm{P}}` を得た方が圧倒的に高速である．
-
-| :eq:`lm-update` ， :eq:`derivation-da` ， :eq:`derivation-db` はいずれも線型方程式 :math:`\bf{y} = \rm{A}\bf{x},\; \bf{x} \in \mathbb{R}^{n}, \bf{y} \in \mathbb{R}^{m}, \rm{A} \in \mathbb{R}^{n \times m}` のかたちをしているため，:eq:`lm-update` から直接 :math:`\bf{\D}_{\rm{P}}` を得る場合と， :eq:`derivation-da` ， :eq:`derivation-db` をそれぞれ解いて :math:`\bf{\D}_{\rm{P}}` を得る場合のどちらも線型方程式を解くことになる．
-| 線型方程式の解は :math:`\bf{x} = (\rm{A}^{\top}\rm{A})^{-1}\rm{A}^{\top}\bf{y}` を解くことで得られるが，
-  すなわち，問題のサイズが大きくなると計算量が急激に増加するため，大きな問題を直接解くよりも，大きな問題を複数の小さな問題に分割して解いた方が計算コストを抑えることができる．
-| SBAでは，式 :eq:`lm-update` を直接解く代わりに，それを小さく分割して得た :eq:`derivation-da` と :eq:`derivation-db` をそれぞれ解くことによって，計算コストを削減している．
-
-
+問題のサイズ(視点数や復元対象となるランドマークの数)が大きいときは， :eq:`lm-update` を直接解いて :math:`\DP` を得るよりも， :eq:`derivation-da` :eq:`derivation-db` :eq:`v-star-inv` によって :math:`\Da` と :math:`\Db` をそれぞれ計算し結合することで :math:`\DP` を得るほうが圧倒的に高速である．
 
 .. [#Gallego_et_al_2015] Gallego, Guillermo, and Anthony Yezzi. "A compact formula for the derivative of a 3-D rotation in exponential coordinates." Journal of Mathematical Imaging and Vision 51.3 (2015): 378-384.
 .. [#Levenberg_1944] Levenberg, Kenneth. "A method for the solution of certain non-linear problems in least squares." Quarterly of applied mathematics 2.2 (1944): 164-168.
+.. [#Coppersmith_et_al_1990] Coppersmith, Don, and Shmuel Winograd. "Matrix multiplication via arithmetic progressions." Journal of symbolic computation 9.3 (1990): 251-280.
