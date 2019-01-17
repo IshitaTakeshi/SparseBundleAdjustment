@@ -114,7 +114,8 @@ Tomasi-Kanade法と比較すると，次のような特徴がある．
 とおけば，誤差を次のように表現することができる．
 
 .. math::
-    E(\mathrm{P}) = (\mathrm{X}-\hat{\mathrm{X}})^{\top} \mathrm{\Sigma}_{\mathrm{X}} (\mathrm{X}-\hat{\mathrm{X}})
+    E(\mathrm{P})
+    = (\mathrm{X}-\hat{\mathrm{X}})^{\top} \mathrm{\Sigma}_{\mathrm{X}}^{-1} (\mathrm{X}-\hat{\mathrm{X}})
 
 
 解法の概要
@@ -128,11 +129,10 @@ SBAでは，誤差関数を最小化するような :math:`\mathrm{P}` を見つ
 
 というふうに :math:`\mathrm{P}^{(t)}` を更新することで誤差関数を最小化するような :math:`\mathrm{P}` を見つける．
 
-更新量 :math:`\delta_{\mathrm{P}}^{(t)}` の計算には LM法_ [#Levenberg_1944]_ を用いる．さらに，LM法に現れるヤコビ行列の構造に着目し，更新量の計算を複数の線型方程式に分解することで，計算量を削減している．
+更新量 :math:`\delta_{\mathrm{P}}^{(t)}` の計算には LM法_ [#Levenberg_1944]_ を用いる．
+更新量 :math:`\delta_{\mathrm{P}}` は次の線型方程式を解くことによって得られる．
 
 .. _LM法: https://en.wikipedia.org/wiki/Levenberg%E2%80%93Marquardt_algorithm
-
-LM法を用いる場合，この更新量 :math:`\delta_{\mathrm{P}}` は次の線型方程式を解くことによって得られる．
 
 .. math::
     \left[
@@ -144,7 +144,7 @@ LM法を用いる場合，この更新量 :math:`\delta_{\mathrm{P}}` は次の�
 
 :math:`\mathbf{J}` は :math:`\hat{\mathrm{X}}` のヤコビ行列 :math:`\mathrm{J} = \frac{\partial \hat{\mathrm{X}}}{\partial \mathrm{P}} \rvert_{\mathrm{P}=\mathrm{P}^{(t)}}` であり， :math:`\lambda \in \mathbb{R}, \lambda \geq 0` は damping parameter である．
 
-SBAでは，:math:`\mathrm{J}` の構造に着目し， :eq:`lm-update` をより小さい複数の線型方程式に分解することで，計算を高速化している．
+SBAでは，:math:`\mathrm{J}` の構造に着目し， :eq:`lm-update` をより小さい複数の線型方程式に分解する．さらに，分解によって得られた方程式がスパースな行列によって構成されていることに着目し，計算を高速化している．
 
 
 線型方程式の分解
@@ -306,7 +306,7 @@ SBAでは，:math:`\mathrm{J}` の構造に着目し， :eq:`lm-update` をよ�
     :label: affected-from-left
 
 という形にすることができる．ここから2つの方程式を取り出す．
-すると， :eq:`affected-from-left` において左辺の行列の右上が :math:`\mathrm{0}` になったことから， :math:`\mathbf{\delta}_{\mathbf{a}}` についての式 :eq:`derivation-delta-a` を得ることができる．
+すると， :eq:`affected-from-left` において左辺の行列の右上が :math:`\mathrm{0}` になったことから， :math:`\mathbf{\delta}_{\mathbf{b}}` を含まない :math:`\mathbf{\delta}_{\mathbf{a}}` についての式 :eq:`derivation-delta-a` を得ることができる．
 
 .. math::
     (\mathrm{U}^{*} - \mathrm{W}{\mathrm{V}^{*}}^{-1}\mathrm{W}^{\top}) \mathbf{\delta}_{\mathbf{a}}
@@ -319,17 +319,6 @@ SBAでは，:math:`\mathrm{J}` の構造に着目し， :eq:`lm-update` をよ�
     :label: derivation-delta-b
 
 したがって，:eq:`derivation-delta-a` を先に解き，得られた :math:`\mathbf{\delta}_{\mathbf{a}}` を :eq:`derivation-delta-b` に代入すれば :math:`\mathbf{\delta}_{\mathbf{b}}` を得ることができる．
-
-
-計算量の削減
-~~~~~~~~~~~~
-
-問題のサイズ(視点数や復元対象となるランドマークの数)が大きいときは， :eq:`lm-update` を直接解いて :math:`\mathbf{\delta}_{\mathrm{P}}` を得るよりも， :eq:`derivation-delta-a` と :eq:`derivation-delta-b` によって :math:`\mathbf{\delta}_{\mathbf{a}}` と :math:`\mathbf{\delta}_{\mathbf{b}}` をそれぞれ計算し結合することで :math:`\mathbf{\delta}_{\mathrm{P}}` を得た方が圧倒的に高速である．
-
-| :eq:`lm-update` ， :eq:`derivation-delta-a` ， :eq:`derivation-delta-b` はいずれも線型方程式 :math:`\mathbf{y} = \mathrm{A}\mathbf{x},\; \mathbf{x} \in \mathbb{R}^{n}, \mathbf{y} \in \mathbb{R}^{m}, \mathrm{A} \in \mathbb{R}^{n \times m}` のかたちをしているため，:eq:`lm-update` から直接 :math:`\mathbf{\delta}_{\mathrm{P}}` を得る場合と， :eq:`derivation-delta-a` ， :eq:`derivation-delta-b` をそれぞれ解いて :math:`\mathbf{\delta}_{\mathrm{P}}` を得る場合のどちらも線型方程式を解くことになる．
-| 線型方程式の解は :math:`\mathbf{x} = (\mathrm{A}^{\top}\mathrm{A})^{-1}\mathrm{A}^{\top}\mathbf{y}` を解くことで得られるが， :math:`n \times n` 行列の逆行列の計算は :math:`O(n^{2.3})` 〜 :math:`O(n^{3})` 程度のオーダーとなってしまう．
-  すなわち，問題のサイズが大きくなると計算量が急激に増加するため，大きな問題を直接解くよりも，大きな問題を複数の小さな問題に分割して解いた方が計算コストを抑えることができる．
-| SBAでは，式 :eq:`lm-update` を直接解く代わりに，それを小さく分割して得た :eq:`derivation-delta-a` と :eq:`derivation-delta-b` をそれぞれ解くことによって，計算コストを削減している．
 
 
 具体的な計算
@@ -465,6 +454,47 @@ SBAでは，:math:`\mathrm{J}` の構造に着目し， :eq:`lm-update` をよ�
     3. :eq:`derivation-delta-a` と :eq:`derivation-delta-b` によって姿勢パラメータ :math:`\mathbf{a}` と3次元点の座標 :math:`\mathbf{b}` それぞれについての更新量 :math:`\mathbf{\delta}_{\mathbf{a}}` と :math:`\mathbf{\delta}_{\mathbf{b}}` を求める
 
 という3つのステップによって更新量を求めることができる．
+
+
+計算量の削減
+~~~~~~~~~~~~
+
+前節までで更新量の計算 :eq:`lm-update` を2つの計算 :eq:`derivation-delta-a` :eq:`derivation-delta-b` に分解する過程を見た．SBAは， :math:`\mathrm{V}^{*}` がスパースであるという性質に基づいて計算量を削減している．
+
+
+:eq:`concrete-form-J` で定義された :math:`\mathrm{J}` を用いて :math:`\mathrm{V}^{*}` を計算すると次のようになる．
+
+
+.. math::
+    \mathrm{V}^{*} = \begin{bmatrix}
+        \mathrm{V}^{*}_{1} & \mathrm{0} & \mathrm{0} & \mathrm{0} \\
+        \mathrm{0} & \mathrm{V}^{*}_{2} & \mathrm{0} & \mathrm{0} \\
+        \mathrm{0} & \mathrm{0} & \mathrm{V}^{*}_{3} & \mathrm{0} \\
+        \mathrm{0} & \mathrm{0} & \mathrm{0} & \mathrm{V}^{*}_{4} \\
+    \end{bmatrix}
+
+ただし
+
+.. math::
+    \begin{align}
+        \mathrm{V}_{i}
+        &= \sum_{j=1}^{m} \mathrm{B}_{ij}^{\top} \mathrm{\Sigma}_{ij}^{-1} \mathrm{B}_{ij} \\
+        \mathrm{V}^{*}_{i}
+        &= \mathrm{V}_{i} + \lambda \mathrm{I}
+    \end{align}
+
+
+:eq:`derivation-delta-a` には :math:`{\mathrm{V}^{*}}` の逆行列が両辺に含まれている．
+また， :eq:`derivation-delta-b` を解いて :math:`\mathbf{\delta}_{\mathbf{b}}` を得る際にも両辺に左から :math:`{\mathrm{V}^{*}}` の逆行列をかける必要がある．
+
+
+問題のサイズ(視点数や復元対象となるランドマークの数)が大きいときは， :eq:`lm-update` を直接解いて :math:`\mathbf{\delta}_{\mathrm{P}}` を得るよりも， :eq:`derivation-delta-a` と :eq:`derivation-delta-b` によって :math:`\mathbf{\delta}_{\mathbf{a}}` と :math:`\mathbf{\delta}_{\mathbf{b}}` をそれぞれ計算し結合することで :math:`\mathbf{\delta}_{\mathrm{P}}` を得た方が圧倒的に高速である．
+
+| :eq:`lm-update` ， :eq:`derivation-delta-a` ， :eq:`derivation-delta-b` はいずれも線型方程式 :math:`\mathbf{y} = \mathrm{A}\mathbf{x},\; \mathbf{x} \in \mathbb{R}^{n}, \mathbf{y} \in \mathbb{R}^{m}, \mathrm{A} \in \mathbb{R}^{n \times m}` のかたちをしているため，:eq:`lm-update` から直接 :math:`\mathbf{\delta}_{\mathrm{P}}` を得る場合と， :eq:`derivation-delta-a` ， :eq:`derivation-delta-b` をそれぞれ解いて :math:`\mathbf{\delta}_{\mathrm{P}}` を得る場合のどちらも線型方程式を解くことになる．
+| 線型方程式の解は :math:`\mathbf{x} = (\mathrm{A}^{\top}\mathrm{A})^{-1}\mathrm{A}^{\top}\mathbf{y}` を解くことで得られるが， :math:`n \times n` 行列の逆行列の計算は :math:`O(n^{2.3})` 〜 :math:`O(n^{3})` 程度のオーダーとなってしまう．
+  すなわち，問題のサイズが大きくなると計算量が急激に増加するため，大きな問題を直接解くよりも，大きな問題を複数の小さな問題に分割して解いた方が計算コストを抑えることができる．
+| SBAでは，式 :eq:`lm-update` を直接解く代わりに，それを小さく分割して得た :eq:`derivation-delta-a` と :eq:`derivation-delta-b` をそれぞれ解くことによって，計算コストを削減している．
+
 
 
 .. [#Gallego_et_al_2015] Gallego, Guillermo, and Anthony Yezzi. "A compact formula for the derivative of a 3-D rotation in exponential coordinates." Journal of Mathematical Imaging and Vision 51.3 (2015): 378-384.
