@@ -13,9 +13,9 @@ Sparse Bundle Adjustment
     \def\DP{{\mbf{\D}_{\rm{P}}}}
 
 概要
-----
+====
 
-Sparse Bundle Adjustment(SBA)はSfMの手法の一種である．
+Sparse Bundle Adjustment(SBA) [#Lourakis_et_al_2015]_ はSfMの手法の一種である．
 SfMは一般的に再投影誤差の最小化問題として記述できるが，推定の対象となるランドマークの数や各視点におけるカメラ姿勢が膨大になり，計算コストが非常に大きくなってしまう．
 SBAは再投影誤差のヤコビ行列がスパースになることに着目し，計算量を大幅に削減した手法である．
 
@@ -33,19 +33,10 @@ Tomasi-Kanade法と比較すると，次のような特徴がある．
 
 
 問題設定
---------
-
-得たいもの
-~~~~~~~~~~
-
-
-- 3次元空間におけるランドマーク座標 :math:`\mbf{b}_{j},j=1,\dots,n`
-- カメラ姿勢 :math:`\mbf{a}_{i} = [\mbf{t}_{i}, \mbf{\omega}_{i}],i=1,\dots,m`
-  ただし :math:`\mbf{t} \in \mathbb{R}^{3}` は並進を表すベクトルであり，:math:`\mbf{\omega} \in \mathfrak{so}(3)` はカメラの回転を表す回転行列 :math:`R \in \mathbb{R}^{3 \times 3}` に対応するリー代数の元である．
-
+========
 
 入力
-~~~~
+----
 
 
 各視点から観測されたランドマークの像の集合 :math:`\rm{X}`
@@ -65,8 +56,17 @@ Tomasi-Kanade法と比較すると，次のような特徴がある．
     \end{bmatrix}
 
 
+出力
+----
+
+- 3次元空間におけるランドマーク座標 :math:`\mbf{b}_{j},j=1,\dots,n`
+- カメラ姿勢 :math:`\mbf{a}_{i} = [\mbf{t}_{i}, \mbf{\omega}_{i}],i=1,\dots,m`
+  ただし :math:`\mbf{t} \in \mathbb{R}^{3}` は並進を表すベクトルであり，:math:`\mbf{\omega} \in \mathfrak{so}(3)` はカメラの回転を表す回転行列 :math:`R \in \mathbb{R}^{3 \times 3}` に対応するリー代数の元である．
+
+
 目的
 ----
+
 
 投影モデルを :math:`\rm{Q}(\mbf{a}_{i},\mbf{b}_{j})` とし，以下の誤差関数を最小化するような :math:`\rm{P} = \left[\mbf{a}, \mbf{b}\right] = \left[ \mbf{a}^{\top}_{1}, \dots, \mbf{a}^{\top}_{m}, \mbf{b}^{\top}_{1}, \dots, \mbf{b}^{\top}_{n} \right]` を求める．
 
@@ -74,6 +74,7 @@ Tomasi-Kanade法と比較すると，次のような特徴がある．
     E(\rm{P}) = \begin{align}
     \sum_{i=1}^{n} \sum_{j=1}^{m} d_{\Cov_{\mbf{x}_{ij}}}(\rm{Q}(\mbf{a}_{j}, \mbf{b}_{i}), \mbf{x}_{ij})^{2}
     \end{align}
+    :label: error-function
 
 
 ここで :math:`d_{\Cov_{\mbf{x}}}` は :math:`\mbf{x}` に対応する分散共分散行列を :math:`\Cov_{\mbf{x}}` として
@@ -129,7 +130,7 @@ Tomasi-Kanade法と比較すると，次のような特徴がある．
 
 
 解法の概要
-----------
+==========
 
 SBAでは，誤差関数を最小化するような :math:`\rm{P}` を見つけるため， :math:`\rm{P}^{(t)}` を逐次的に更新し，誤差関数を探索する．すなわち，時刻 :math:`t` における :math:`\rm{P}` の更新量を :math:`\D_{\rm{P}}^{(t)} = \left[ \D_{\mbf{a}_{1}}^{\top}, \dots, \D_{\mbf{a}_{m}}^{\top}, \D_{\mbf{b}_{1}}^{\top}, \dots, \D_{\mbf{b}_{n}}^{\top} \right]` ` として，
 
@@ -156,9 +157,11 @@ SBAでは，誤差関数を最小化するような :math:`\rm{P}` を見つけ�
 
 SBAでは，:math:`\rm{J}` の構造に着目し， :eq:`lm-update` をより小さい複数の線型方程式に分解する．さらに，分解によって得られた方程式がスパースな行列によって構成されていることに着目し，計算を高速化している．
 
+解法
+====
 
 線型方程式の分解
-~~~~~~~~~~~~~~~~
+----------------
 
 まず :math:`\rm{J}` を分解する． :math:`\rm{P}` の定義より， :math:`\rm{A} = \frac{\partial \hat{\rm{X}}}{\partial \mbf{a}},\rm{B} = \frac{\partial \hat{\rm{X}}}{\partial \mbf{b}}` とおけば， :math:`\rm{J}` は
 
@@ -209,7 +212,9 @@ SBAでは，:math:`\rm{J}` の構造に着目し， :eq:`lm-update` をより小
     \end{align}
     :label: left-side-decomposition
 
+
 以上の結果を用いると， :eq:`lm-update` は
+
 
 .. math::
     \left[
@@ -372,6 +377,7 @@ SBAでは，:math:`\rm{J}` の構造に着目し， :eq:`lm-update` をより小
 
 では :math:`\rm{A}_{ij}` や :math:`\rm{B}_{ij}` の具体的なかたちを求めてみよう．
 
+
 姿勢パラメータに関する微分
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -472,12 +478,12 @@ SBAでは，:math:`\rm{J}` の構造に着目し， :eq:`lm-update` をより小
     \begin{align}
         \mbf{x}
         &= (\rm{A}^{\top}\rm{A})^{-1}\rm{A}^{\top}\mbf{y} \\
-        &= \rm{K}\rm{A}^{\top}\mbf{y},\rm{K} \\
-        &= \rm{A}^{\top}\rm{A} \\
-        K &\in \mathbb{R}^{n \times n}
+        &= \rm{K}^{-1}\rm{A}^{\top}\mbf{y} \\
+        \rm{K} &= \rm{A}^{\top}\rm{A},
+        K \in \mathbb{R}^{n \times n}
     \end{align}
 
-| によって得られるが，行列 :math:`\rm{K}` のサイズが大きくなると計算量が急激に増加する．これは， :math:`n \times n` 行列の逆行列を計算するアルゴリズムが :math:`O(n^{2.3})` 〜 :math:`O(n^{3})` 程度の計算量をもつことに起因する [#Coppersmith_et_al_1990]_ ．したがって，線型方程式を高速に解くには，問題の構造を見極め， :math:`\rm{K}` の逆行列を直接計算することを避けて計算量を減らす必要がある．
+| によって得られるが，行列 :math:`\rm{K}` のサイズが大きくなると解を求めるための計算量が急激に増加する．これは， :math:`n \times n` 行列の逆行列を計算するアルゴリズムが :math:`O(n^{2.3})` 〜 :math:`O(n^{3})` 程度の計算量をもつことに起因する [#Coppersmith_et_al_1990]_ ．したがって，線型方程式を高速に解くには，問題の構造を見極め， :math:`\rm{K}` の逆行列を直接計算することを避けて計算量を減らす必要がある．
 | SBAでは， :eq:`lm-update` を直接解くのではなく，それを分割して得た :eq:`derivation-da` と :eq:`derivation-db` をそれぞれ解くことで :math:`\DP` を得ている．さらに， :math:`\VStar` がスパースであるという性質に基づいて計算量を大幅に削減している．
 
 
@@ -522,6 +528,26 @@ SBAでは，:math:`\rm{J}` の構造に着目し， :eq:`lm-update` をより小
 
 問題のサイズ(視点数や復元対象となるランドマークの数)が大きいときは， :eq:`lm-update` を直接解いて :math:`\DP` を得るよりも， :eq:`derivation-da` :eq:`derivation-db` :eq:`v-star-inv` によって :math:`\Da` と :math:`\Db` をそれぞれ計算し結合することで :math:`\DP` を得るほうが圧倒的に高速である．
 
+
+改良
+====
+
+[#Agarwal_et_al_2010]_ は inexact Newton method とPCG(Preconditioned Conjugate Gradients)法を組み合わせることでより高速に更新量を求める手法を提案している．
+
+SBAでは，誤差関数の更新則 :eq:`lm-update` を変形し， :eq:`derivation-da` :eq:`derivation-db` という2つの線型方程式を解く問題に落とし込んでいる．
+このうち :eq:`derivation-db` は :math:`\VStar` のスパース性を利用して高速に解くことができたが， :eq:`derivation-da` は :math:`\rm{S}` の逆行列を直接計算する必要があった．
+
+SBAでは :eq:`derivation-da` と :eq:`derivation-db` を解くことで各iterationにおける"厳密な"更新量 :math:`\DP` を求めている．これに対して [#Agarwal_et_al_2010]_ は必ずしも :eq:`derivation-da` :eq:`derivation-db` の厳密な解を求める必要はなく，より高速な近似的計算によって厳密解を代替できることを主張している． すなわち，最終的な目的は誤差関数 :eq:`error-function` を十分小さくするような解を見つけることであり，もしそれが達成できるのであれば，必ずしも各ステップにおいて厳密な更新量を見つける必要はないのである．各iterationごとにより少ない計算量で近似的に更新量を求められれば，最適解に達するまでのステップ数が増えたとしても，全体の計算量を軽くすることができる可能性がある．
+
+2通りのやり方がある．
+
+    1. :eq:`lm-update` に直接PCG法を適用する
+    2. :eq:`derivation-da` にPCG法を適用する
+
+
+
+.. [#Lourakis_et_al_2015] Lourakis, Manolis IA, and Antonis A. Argyros. "SBA: A software package for generic sparse bundle adjustment." ACM Transactions on Mathematical Software (TOMS) 36.1 (2009): 2.
 .. [#Gallego_et_al_2015] Gallego, Guillermo, and Anthony Yezzi. "A compact formula for the derivative of a 3-D rotation in exponential coordinates." Journal of Mathematical Imaging and Vision 51.3 (2015): 378-384.
 .. [#Levenberg_1944] Levenberg, Kenneth. "A method for the solution of certain non-linear problems in least squares." Quarterly of applied mathematics 2.2 (1944): 164-168.
 .. [#Coppersmith_et_al_1990] Coppersmith, Don, and Shmuel Winograd. "Matrix multiplication via arithmetic progressions." Journal of symbolic computation 9.3 (1990): 251-280.
+.. [#Agarwal_et_al_2010] Agarwal, Sameer, et al. "Bundle adjustment in the large." European conference on computer vision. Springer, Berlin, Heidelberg, 2010.
