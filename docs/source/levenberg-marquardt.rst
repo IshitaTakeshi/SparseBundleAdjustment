@@ -6,7 +6,7 @@ LM法
 概要
 ----
 
-LM法は，Gauss-Newton法と最急降下法の性質を組み合わせた非線形最小二乗法の一種である．
+ニュートン法は収束性が保証されておらず，問題によっては解を見つけられないことがある．LM法はニュートン法と最急降下法を組み合わせることで収束性を保証したアルゴリズムである [#Wright_et_al_1999]_ ．
 
 :math:`\mathbf{\beta}` をパラメータとするあるベクトル値関数 :math:`\mathbf{f}(\mathbf{\beta})` と目標値ベクトル :math:`\mathbf{y}` について，次で定義される誤差 :math:`d^{2}_{\mathrm{\Sigma}}(\mathbf{y}, \mathbf{f}(\mathbf{\beta}))` を最小化するような :math:`\mathbf{\beta}` を見つける問題を考える．
 
@@ -45,10 +45,10 @@ LM法はGauss-Newton法と最急降下法を組み合わせた手法だと解釈
 
 .. math::
     d^{2}_{\mathrm{\Sigma}}(\mathbf{y}, \mathbf{f}(\mathbf{\beta} + \mathbf{\delta})) = (\mathbf{y} - \mathbf{f}(\mathbf{\beta} + \mathbf{\delta}))^{\top}\mathrm{\Sigma}^{-1} (\mathbf{y} - \mathbf{f}(\mathbf{\beta} + \mathbf{\delta}))
-    :label: updated_error
+    :label: updated-error
 
 
-関数 :math:`\mathbf{f}` を :math:`\mathbf{f}(\mathbf{\beta} + \mathbf{\delta}) \approx \mathbf{f}(\mathbf{\beta}) + \mathrm{J} \mathbf{\delta}` と近似すると， :eq:`updated_error` は
+関数 :math:`\mathbf{f}` を :math:`\mathbf{f}(\mathbf{\beta} + \mathbf{\delta}) \approx \mathbf{f}(\mathbf{\beta}) + \mathrm{J} \mathbf{\delta}` と近似すると， :eq:`updated-error` は
 
 .. math::
     \begin{align}
@@ -71,3 +71,12 @@ LM法はGauss-Newton法と最急降下法を組み合わせた手法だと解釈
 .. math::
     (\mathrm{J}^{\top} \mathrm{\Sigma}^{-1} \mathrm{J} + \lambda \mathrm{I}) \mathbf{\delta}
     = \mathrm{J}^{\top} \mathrm{\Sigma}^{-1} [\mathbf{y} - \mathbf{f}(\mathbf{\beta})]
+
+
+反復アルゴリズム
+----------------
+
+LM法
+~~~~
+
+.. [#Wright_et_al_1999] Wright, Stephen, and Jorge Nocedal. "Numerical optimization." Springer Science 35.67-68 (1999): 7.
