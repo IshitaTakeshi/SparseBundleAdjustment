@@ -182,8 +182,7 @@ Rodriguesの回転公式
            \left( t - \frac{t^3}{3!} + \frac{t^5}{5!} + \dots \right)
            \skew{\mbf{\omega}} +
            \left( \frac{t^2}{2!} - \frac{t^4}{4!} + \frac{t^6}{6!} + \dots \right)
-           \skew{\mbf{\omega}}^2  \\
-        &= I + \sin(t) \skew{\mbf{\omega}} + \left( 1 - \cos(t) \right) \skew{\mbf{\omega}}^2
+           \skew{\mbf{\omega}}^2 .
     \end{align}
 
 :math:`\sin(t) = t - \frac{t^3}{3!} + \frac{t^5}{5!} + \dots` ， :math:`1 - \cos(t) = \frac{t^2}{2!} - \frac{t^4}{4!} + \frac{t^6}{6!} + \dots` を利用すれば，Rodriguesの回転公式を導くことができる．
