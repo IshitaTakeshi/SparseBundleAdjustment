@@ -57,10 +57,9 @@ SLAMはカメラから逐次的に得られる視覚情報を用いて環境地�
 導出
 ~~~~
 
-ここでは回転群の性質から出発して :math:`\so(3)` を導出し，さらに :math:`\so(3)` を指数写像で射影すると :math:`\SO(3)` が得られることを見る．
+ここでは [#Ma_et_al_2012]_ を参考に， :math:`\so(3)` を指数写像で射影すると :math:`\SO(3)` が得られることを見る．
 
 実数から回転行列への写像 :math:`R(t)` を考える．ただし :math:`t=0` において :math:`R(t) = I` を通るものとする．
-
 
 .. math::
     R(t) : \mathbb{R} \to \SO(3), \; R(0) = I
@@ -123,7 +122,8 @@ SLAMはカメラから逐次的に得られる視覚情報を用いて環境地�
     :label: exponential-map
 
 
-と表現することができる．
+と表現することができる．すなわち， :eq:`differential-equation-so3` :eq:`exponential-map` より，回転行列 :math:`R(t)` は3次元の実ベクトルから生成することができる．
+
 さて，:math:`R(t)` の指数写像による生成方法 :eq:`exponential-map` は行列の直交性 :eq:`orthogonality` のみから導かれたため， :math:`\det(R(t)) = 1` を示さなければ :math:`R(t)` が真に :math:`\SO(3)` の元であるということは言えない．
 しかし，指数写像 :eq:`exponential-map` によって得られた :math:`R(t)` が :math:`\det(R(t)) = 1` を充足することは簡単に示すことができる．
 
@@ -132,8 +132,8 @@ SLAMはカメラから逐次的に得られる視覚情報を用いて環境地�
 .. math::
     \begin{align}
         \det(R(t))
-        &= \det(\exp(\skew{\mbf{\omega}} t)) \\
-        &= \exp(\operatorname{tr}(\skew{\mbf{\omega}} t)) \\
+        &= \det(\exp(\skew{\mbf{\omega}}\, t)) \\
+        &= \exp(\operatorname{tr}(\skew{\mbf{\omega}}\, t)) \\
         &= \exp(0) \\
         &= 1
     \end{align}
@@ -141,11 +141,75 @@ SLAMはカメラから逐次的に得られる視覚情報を用いて環境地�
 となり， :math:`R(t)` はやはり :math:`\SO(3)` の元であることがわかる．
 
 
-指数写像
-~~~~~~~~
-
-
 Rodriguesの回転公式
 ~~~~~~~~~~~~~~~~~~~
 
-指数写像を実装するわけにはいかないため，代わりにRodriguesの回転公式を用いる．
+:math:`||\mbf{\omega}||^2 = 1` のとき， :math:`\skew{\mbf{\omega}}^3 = -\skew{\mbf{\omega}}` が成り立つ [#Ma_et_al_2012]_ ．
+
+
+これを利用すると，指数写像 :eq:`exponential-map` を別のかたちで表現できるようになる [#Ma_et_al_2012]_ ．
+
+行列の指数関数の定義
+
+.. math::
+    \exp(A) = \sum_{n=0}^{\infty} \frac{A^n}{n!} \\
+    :label: matrix-exponential
+
+より，
+
+.. math::
+    \begin{align}
+        R(t)
+        &= \exp(\skew{\mbf{\omega}}\, t) \\
+        &= \sum_{n=0}^{\infty} \frac{(\skew{\mbf{\omega}} \, t)^n}{n!} \\
+        &= I +
+           \skew{\mbf{\omega}} \, t +
+           \frac{\skew{\mbf{\omega}}^2 \, t^2}{2!} +
+           \frac{\skew{\mbf{\omega}}^3 \, t^3}{3!} +
+           \frac{\skew{\mbf{\omega}}^4 \, t^4}{4!} +
+           \frac{\skew{\mbf{\omega}}^5 \, t^5}{5!} +
+           \frac{\skew{\mbf{\omega}}^6 \, t^6}{6!} +
+           \dots  \\
+        &= I +
+           \skew{\mbf{\omega}} \, t +
+           \frac{\skew{\mbf{\omega}}^2  \, t^2}{2!} +
+           \frac{-\skew{\mbf{\omega}}   \, t^3}{3!} +
+           \frac{-\skew{\mbf{\omega}}^2 \, t^4}{4!} +
+           \frac{\skew{\mbf{\omega}}    \, t^5}{5!} +
+           \frac{\skew{\mbf{\omega}}^2  \, t^6}{6!} +
+           \dots  \\
+        &= I +
+           \left( t - \frac{t^3}{3!} + \frac{t^5}{5!} + \dots \right)
+           \skew{\mbf{\omega}} +
+           \left( \frac{t^2}{2!} - \frac{t^4}{4!} + \frac{t^6}{6!} + \dots \right)
+           \skew{\mbf{\omega}}^2  \\
+        &= I + \sin(t) \skew{\mbf{\omega}} + \left( 1 - \cos(t) \right) \skew{\mbf{\omega}}^2
+    \end{align}
+
+:math:`\sin(t) = t - \frac{t^3}{3!} + \frac{t^5}{5!} + \dots` ， :math:`1 - \cos(t) = \frac{t^2}{2!} - \frac{t^4}{4!} + \frac{t^6}{6!} + \dots` を利用すれば，Rodriguesの回転公式を導くことができる．
+
+.. math::
+    R(t) = I + \sin(t) \skew{\mbf{\omega}} + \left( 1 - \cos(t) \right) \skew{\mbf{\omega}}^2
+    :label: rodrigues
+
+| 指数写像を実装する際は，行列の指数関数 :eq:`matrix-exponential` を定義通りに実装するよりもRodriguesの回転公式を用いたほうが圧倒的に簡潔であり，計算も速い．
+| なお， :math:`||\mbf{\omega}||^2 = 1` のとき :math:`\skew{\mbf{\omega}}^2 = \mbf{\omega} \mbf{\omega}^{\top} - I` が成り立つため，これを利用して
+
+.. math::
+    R(t) = \cos(t) I + (1 - \cos(t))\mbf{\omega}\mbf{\omega}^{\top} + \sin(t) \skew{\mbf{\omega}}
+    :label: modfied-rodrigues
+
+とする場合もある．
+なお，実際に実装する際は :math:`\mbf{\omega},\, t` という2つの値を与えるのではなく， :math:`\mbf{u} \in \mathbb{R}^{3}` を引数として
+
+.. math::
+    \begin{align}
+    t &= ||\mbf{u}|| \\
+    \mbf{\omega} &= \frac{\mbf{u}}{||\mbf{u}||} \\
+    \exp(\skew{\mbf{u}}) &= \exp(\skew{\mbf{\omega}}\, t) \\
+    \end{align}
+
+とすることで，単一の引数からの指数写像の計算を可能にしている．
+
+
+.. [#Ma_et_al_2012] Ma, Yi, et al. An invitation to 3-d vision: from images to geometric models. Vol. 26. Springer Science & Business Media, 2012.
