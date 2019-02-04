@@ -1,9 +1,10 @@
 import numpy as np
 from scipy.optimize import least_squares
 
-from sfm.lm import LevenbergMarquardt
+from sfm.sba import ParameterManager, SBA
+from sfm.lm import LMIterator
 from sfm.metrics import SquaredNormResidual
-from sfm.updaters import PCGUpdater
+from sfm.updaters import LMUpdater
 from sfm.initializers import Initializer
 
 
@@ -38,15 +39,21 @@ def optimize_scipy(sba, observations):
     return sba.decompose(p)
 
 
-def optimize_lm(sba, observation):
-    function = sba.projection
-    jacobian = sba.jacobian
-    target = observation.flatten()
+def optimize_lm(camera_parameters, observations):
+    target = observations.flatten()
 
-    residual = SquaredNormResidual(function, target)
-    updater = PCGUpdater(function, jacobian, target, sba.length_all_poses)
-    initializer = Initializer(sba.total_parameter_size)
-    lm = LevenbergMarquardt(updater, residual, initializer,
-                            initial_lambda=1e-6, nu=1.2)
-    p = lm.optimize(max_iter=100)
-    return sba.decompose(p)
+    n_3dpoints, n_viewpoints = observations.shape[:2]
+
+    manager = ParameterManager(n_3dpoints, n_viewpoints)
+
+    sba = SBA(manager, camera_parameters)
+
+    residual = SquaredNormResidual(sba.projection, target)
+    updater = LMUpdater(manager, sba, target)
+    initializer = Initializer(manager)
+
+    lm = LMIterator(updater, residual, initializer,
+                    initial_lambda=1e+6, nu=1.2)
+    p = lm.optimize(max_iter=2000)
+
+    return manager.decompose(p)
