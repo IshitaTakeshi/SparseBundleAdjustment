@@ -99,11 +99,6 @@ class SBA(object):
              n_3dpoints * n_point_parameters)
         """
 
-        points3d, poses = self.decompose(p)
-        A, B = jacobian_projection(
-            self.camera_parameters,
-            points3d, poses
-        )
-
-        J = sparse.hstack((A, B))
-        return J.tocsr()
+        points3d, poses = self.manager.decompose(p)
+        A, B = jacobian_projection(self.camera_parameters, points3d, poses)
+        return A, B
