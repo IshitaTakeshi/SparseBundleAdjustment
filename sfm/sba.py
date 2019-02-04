@@ -11,49 +11,10 @@ from sfm.config import n_pose_parameters, n_point_parameters
 # here we call 3D point coordinates 'structure parameters'
 
 
-def initial_rotations(n_viewpoints):
-    q = np.random.random((n_viewpoints, 4))
-    n = np.linalg.norm(q, axis=1, keepdims=True)
-    return q / n
-
-    return np.hstack((
-        np.ones((n_viewpoints, 1)),
-        np.zeros((n_viewpoints, 3))
-    ))
-
-
-def initial_translations(n_viewpoints):
-    return np.random.randn(n_viewpoints, 3)
-
-
-def initial_poses(n_viewpoints):
-    rotation = initial_rotations(n_viewpoints)
-    translation = initial_translations(n_viewpoints)
-    return np.hstack((rotation[:, 1:], translation))
-
-
-def initial_3dpoints(n_3dpoints):
-    return np.random.randn(n_3dpoints, n_point_parameters)
-
-
-class SBA(object):
-    def __init__(self, camera_parameters, n_3dpoints, n_viewpoints):
-        """
-        Args:
-            camera_parameters (CameraParameters): Camera intrinsic parameters
-            n_3dpoints (int): Number of 3D points to be reconstructed. `n` in the paper
-            n_viewpoints (int) : Number of viewpoints. `m` in the paper
-        """
-
-        self.camera_parameters = camera_parameters
+class ParameterManager(object):
+    def __init__(self, n_3dpoints, n_viewpoints):
         self.n_3dpoints = n_3dpoints
         self.n_viewpoints = n_viewpoints
-
-    @property
-    def initial_p(self):
-        points3d = initial_3dpoints(self.n_3dpoints)
-        poses = initial_poses(self.n_viewpoints)
-        return self.compose(points3d, poses)
 
     @property
     def length_all_3dpoints(self):
@@ -67,25 +28,36 @@ class SBA(object):
     def total_parameter_size(self):
         return self.length_all_3dpoints + self.length_all_poses
 
+    def decompose(self, p):
+        N = self.length_all_poses
+        M = self.length_all_3dpoints
+
+        assert(len(p) == N + M)
+        # This part is confusing. The left side of the vector p is
+        # `poses` and the right side is `points3d`
+        poses = p[:N].reshape(self.n_viewpoints, n_pose_parameters)
+        points3d = p[N:N+M].reshape(self.n_3dpoints, n_point_parameters)
+        return points3d, poses
+
     def compose(self, points3d, poses):
         # This part is confusing. The left side of the vector p is
         # `poses` and the right side is `points3d`
         return np.concatenate((poses.flatten(), points3d.flatten()))
 
-    def decompose(self, p):
-        N = self.length_all_poses
-        M = self.length_all_3dpoints
 
-        assert(len(p) == self.total_parameter_size)
-        # This part is confusing. The left side of the vector p is
-        # `poses` and the right side is `points3d`
+class SBA(object):
+    def __init__(self, manager, camera_parameters):
+        """
+        Args:
+            camera_parameters (CameraParameters): Camera intrinsic parameters
+        """
 
-        poses = p[:N].reshape(self.n_viewpoints, n_pose_parameters)
-        points3d = p[N:N+M].reshape(self.n_3dpoints, n_point_parameters)
-        return points3d, poses
+        self.manager = manager
+        self.camera_parameters = camera_parameters
 
     # @profile
     def projection(self, p):
+
         """
         If n_viewpoints = 2 and n_3dpoints = 3, the result array is
 
@@ -108,8 +80,9 @@ class SBA(object):
         # Although the observation sequence have to be correctly
         # associated with the rows of J (= sba.jacobian(p))
 
-        points3d, poses = self.decompose(p)
         # P.shape == (n_3dpoints, n_viewpoints, 2)
+
+        points3d, poses = self.manager.decompose(p)
         P = projection(self.camera_parameters, points3d, poses)
         return P.flatten()
 
