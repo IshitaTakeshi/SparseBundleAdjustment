@@ -12,6 +12,9 @@ Welcome to Sparse Bundle Adjustment's documentation!
 
     sparse-bundle-adjustment
     bundle-adjustment-in-the-large
+    levenberg-marquardt
+    projection-model
+    camera-pose-parametrization
 
 Indices and tables
 ==================

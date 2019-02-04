@@ -538,12 +538,6 @@ SBAでは，誤差関数の更新則 :eq:`lm-update` を変形し， :eq:`deriva
 
 SBAでは :eq:`derivation-da` と :eq:`derivation-db` を解くことで各iterationにおける"厳密な"更新量 :math:`\DP` を求めている．これに対して [#Agarwal_et_al_2010]_ は必ずしも :eq:`derivation-da` :eq:`derivation-db` の厳密な解を求める必要はなく，より高速な近似的計算によって厳密解を代替できることを主張している． すなわち，最終的な目的は誤差関数 :eq:`error-function` を十分小さくするような解を見つけることであり，もしそれが達成できるのであれば，必ずしも各ステップにおいて厳密な更新量を見つける必要はないのである．各iterationごとにより少ない計算量で近似的に更新量を求められれば，最適解に達するまでのステップ数が増えたとしても，全体の計算量を軽くすることができる可能性がある．
 
-2通りのやり方がある．
-
-    1. :eq:`lm-update` に直接PCG法を適用する
-    2. :eq:`derivation-da` にPCG法を適用する
-
-
 
 .. [#Lourakis_et_al_2015] Lourakis, Manolis IA, and Antonis A. Argyros. "SBA: A software package for generic sparse bundle adjustment." ACM Transactions on Mathematical Software (TOMS) 36.1 (2009): 2.
 .. [#Gallego_et_al_2015] Gallego, Guillermo, and Anthony Yezzi. "A compact formula for the derivative of a 3-D rotation in exponential coordinates." Journal of Mathematical Imaging and Vision 51.3 (2015): 378-384.
