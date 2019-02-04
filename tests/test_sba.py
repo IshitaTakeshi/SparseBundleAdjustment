@@ -14,9 +14,9 @@ from sfm.camera import CameraParameters
 from sfm import config
 
 
-class TestParameterManager(object):
+class TestParameterManager(unittest.TestCase):
     def setUp(self):
-        self.manager = ParameterManager(n_3dpoints=3, n_viewpoints=2),
+        self.manager = ParameterManager(n_3dpoints=3, n_viewpoints=2)
 
         self.points3d = np.array([
             [9, 0, 2],
@@ -27,6 +27,14 @@ class TestParameterManager(object):
         self.poses = np.array([
             [1, 0, -2, 4, -3, 5],
             [1, -1, 1, -3, -9, 8]
+        ])
+
+        self.p = np.array([
+            1, 0, -2, 4, -3, 5,
+            1, -1, 1, -3, -9, 8,
+            9, 0, 2,
+            0, 9, 2,
+            3, 8, 4
         ])
 
     def test_compose(self):
