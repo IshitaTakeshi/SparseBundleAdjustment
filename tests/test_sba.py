@@ -7,17 +7,16 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 import numpy as np
 from numpy.testing import assert_array_equal
+from scipy import sparse
 
-from sfm.sba import SBA
+from sfm.sba import SBA, ParameterManager
 from sfm.camera import CameraParameters
 from sfm import config
 
 
-class TestSBA(unittest.TestCase):
+class TestParameterManager(object):
     def setUp(self):
-        config.n_pose_parameters = 6
-        config.n_point_parameters = 3
-        self.sba = SBA(CameraParameters(1, 0), n_viewpoints=2, n_3dpoints=3)
+        self.manager = ParameterManager(n_3dpoints=3, n_viewpoints=2),
 
         self.points3d = np.array([
             [9, 0, 2],
@@ -29,6 +28,27 @@ class TestSBA(unittest.TestCase):
             [1, 0, -2, 4, -3, 5],
             [1, -1, 1, -3, -9, 8]
         ])
+
+    def test_compose(self):
+        assert_array_equal(
+            self.manager.compose(self.points3d, self.poses),
+            self.p
+        )
+
+    def test_decompose(self):
+        points3d, poses = self.manager.decompose(self.p)
+        assert_array_equal(points3d, self.points3d)
+        assert_array_equal(poses, self.poses)
+
+
+class TestSBA(unittest.TestCase):
+    def setUp(self):
+        config.n_pose_parameters = 6
+        config.n_point_parameters = 3
+
+        self.manager = ParameterManager(n_3dpoints=3, n_viewpoints=2)
+
+        self.sba = SBA(self.manager, CameraParameters(1, 0))
 
         self.dpoints3d = np.array([
             [1e-2, 5e-2, 3e-2],
@@ -49,22 +69,17 @@ class TestSBA(unittest.TestCase):
             3, 8, 4
         ])
 
-    def test_compose(self):
-        assert_array_equal(
-            self.sba.compose(self.points3d, self.poses),
-            self.p
-        )
-
-    def test_decompose(self):
-        points3d, poses = self.sba.decompose(self.p)
-        assert_array_equal(points3d, self.points3d)
-        assert_array_equal(poses, self.poses)
-
     def observe_change(self, dp):
+        """
+        Compare the actual change of sba.projection to
+        the one approximated by sba.jacobian
+        """
+
         x0 = self.sba.projection(self.p)
         x1 = self.sba.projection(self.p + dp)
 
-        J = self.sba.jacobian(self.p)
+        A, B = self.sba.jacobian(self.p)
+        J = sparse.hstack((A, B))
 
         np.set_printoptions(precision=4, linewidth=1e8, suppress=True)
 
@@ -76,17 +91,17 @@ class TestSBA(unittest.TestCase):
 
     def test_jacobian(self):
         print("Change all")
-        dp = self.sba.compose(self.dpoints3d, self.dposes)
+        dp = self.manager.compose(self.dpoints3d, self.dposes)
         self.observe_change(dp)
 
     def test_jacobian_3dpoints(self):
         print("Change only 3D points")
-        dp = self.sba.compose(self.dpoints3d, np.zeros(self.dposes.shape))
+        dp = self.manager.compose(self.dpoints3d, np.zeros(self.dposes.shape))
         self.observe_change(dp)
 
     def test_jacobian_poses(self):
         print("Change only poses")
-        dp = self.sba.compose(np.zeros(self.dpoints3d.shape), self.dposes)
+        dp = self.manager.compose(np.zeros(self.dpoints3d.shape), self.dposes)
         self.observe_change(dp)
 
 
