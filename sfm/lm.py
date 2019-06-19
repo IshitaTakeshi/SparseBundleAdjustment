@@ -7,7 +7,8 @@ class ErrorNotReducedException(Exception):
 
 class LMIterator(object):
     def __init__(self, updater, metric, initializer,
-                 initial_lambda=1e-3, nu=1.01, tolerance=1e-4):
+                 initial_lambda=1e-3, nu=1.01, tolerance=1e-4,
+                 min_reduction_ratio=1e-3):
 
         """
         Args:
@@ -24,6 +25,13 @@ class LMIterator(object):
             raise ValueError("tolerance must be > 0")
 
         self.tolerance = tolerance
+
+        if min_reduction_ratio <= 0:
+            raise ValueError(
+                "min_reduction_ratio must be 1 > min_reduction_ratio >= 0"
+            )
+
+        self.min_reduction_ratio = min_reduction_ratio
 
         if nu <= 1.0:
             raise ValueError("nu must be >= 1")

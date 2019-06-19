@@ -53,7 +53,8 @@ def optimize_lm(camera_parameters, observations):
     initializer = Initializer(manager)
 
     lm = LMIterator(updater, residual, initializer,
-                    initial_lambda=1e+6, nu=1.2)
+                    initial_lambda=1e+6, nu=1.2,
+                    min_reduction_ratio=1e-5)
     p = lm.optimize(max_iter=2000)
 
     return manager.decompose(p)
