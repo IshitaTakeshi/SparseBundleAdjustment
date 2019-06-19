@@ -111,6 +111,9 @@ class LMIterator(object):
             if r1 < self.tolerance:
                 return p
 
+            if r0-r1 < self.min_reduction_ratio * r1:
+                return p
+
             self.print_status(r0, r1, lambda_)
 
             r0 = r1
